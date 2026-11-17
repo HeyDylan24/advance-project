@@ -2,6 +2,16 @@
 
 A React dashboard served by a FastAPI application for the Olist Brazilian E-Commerce Public Dataset. Neon PostgreSQL stores the imported data. Node.js is used only to build the React frontend; the deployed application server and data importer are Python.
 
+## Analytics
+
+- Filter the full dashboard by any purchase year present in the imported data.
+- Track monthly gross merchandise value and month-over-month revenue change, with zero-sales months kept visible.
+- Compare leading product categories by sales, order reach, average item price, and share of period sales.
+- Assess delivery reliability with on-time rate plus mean and median delivery time.
+- Inspect canceled-order share, order-status mix, and the complete review-score distribution.
+
+Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
+
 ## Run locally
 
 1. Install Python 3.10 or newer and Node.js 20 or newer.
