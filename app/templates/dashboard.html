@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <title>Olist Commerce | Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+    <script src="{{ url_for('static', filename='dashboard.js') }}" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Olist Commerce dashboard home">
+          <span class="brand-mark">O</span>
+          <span>olist<span class="brand-light">commerce</span></span>
+        </a>
+        <div class="topbar-meta"><span class="live-dot"></span> DATA OVERVIEW</div>
+      </header>
+
+      <section class="page-heading">
+        <div>
+          <p class="eyebrow">BRAZILIAN E-COMMERCE</p>
+          <h1>Commerce overview</h1>
+          <p class="subheading">A clear view of sales, customers' experience, and delivery performance.</p>
+        </div>
+        <div class="data-note">
+          <span class="note-label">DATASET</span>
+          <span>Olist · 2016–2018</span>
+        </div>
+      </section>
+
+      <section class="metric-grid" aria-label="Key performance indicators">
+        <article class="metric-card">
+          <div class="metric-top"><span>Total sales</span><span class="metric-icon icon-sales">R$</span></div>
+          <div class="metric-value">{{ metrics.sales|brl }}</div>
+          <p class="metric-caption">Item value, excluding freight</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-top"><span>Orders</span><span class="metric-icon icon-orders">↗</span></div>
+          <div class="metric-value">{{ metrics.orders|number }}</div>
+          <p class="metric-caption">Unique orders placed</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-top"><span>Average order</span><span class="metric-icon icon-average">◎</span></div>
+          <div class="metric-value">{{ metrics.average_order|brl }}</div>
+          <p class="metric-caption">Average item value per order</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-top"><span>Customer rating</span><span class="metric-icon icon-rating">★</span></div>
+          <div class="metric-value">{{ "%.2f"|format(metrics.average_review) }}<span class="value-unit">/ 5</span></div>
+          <p class="metric-caption">Average submitted review</p>
+        </article>
+      </section>
+
+      <section class="chart-grid">
+        <article class="panel panel-wide">
+          <div class="panel-heading">
+            <div><p class="eyebrow">SALES TREND</p><h2>Monthly item sales</h2></div>
+            <span class="panel-unit">BRL</span>
+          </div>
+          <div class="chart-wrap chart-tall"><canvas id="sales-chart" aria-label="Monthly sales chart"></canvas></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">FULFILLMENT</p><h2>Delivery performance</h2></div>
+          </div>
+          <div class="delivery-stat">
+            <div class="delivery-number">{{ "%.1f"|format(metrics.on_time_rate) }}<span>%</span></div>
+            <div class="delivery-label">Delivered on or before estimated date</div>
+          </div>
+          <div class="delivery-divider"></div>
+          <div class="delivery-bottom">
+            <span>Average delivery time</span>
+            <strong>{{ "%.1f"|format(metrics.average_delivery_days) }} days</strong>
+          </div>
+          {% if metrics.latest_purchase %}
+          <p class="footnote">Latest order: {{ metrics.latest_purchase.strftime("%b %d, %Y") }}</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <section class="chart-grid lower-grid">
+        <article class="panel panel-wide">
+          <div class="panel-heading">
+            <div><p class="eyebrow">PRODUCT MIX</p><h2>Top categories by sales</h2></div>
+            <span class="panel-unit">BRL</span>
+          </div>
+          <div class="chart-wrap"><canvas id="category-chart" aria-label="Sales by category chart"></canvas></div>
+        </article>
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">ORDER HEALTH</p><h2>Order status</h2></div>
+          </div>
+          <div class="chart-wrap chart-doughnut"><canvas id="status-chart" aria-label="Order status chart"></canvas></div>
+          <div id="status-legend" class="legend-list"></div>
+        </article>
+      </section>
+
+      <section class="panel rating-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">VOICE OF CUSTOMER</p><h2>Review score distribution</h2></div>
+          <span class="rating-summary">Average <strong>{{ "%.2f"|format(metrics.average_review) }}</strong> / 5</span>
+        </div>
+        <div class="chart-wrap chart-rating"><canvas id="rating-chart" aria-label="Review score distribution chart"></canvas></div>
+      </section>
+
+      <footer>
+        <span>Olist Commerce Analytics</span>
+        <span>Source: Olist Brazilian E-Commerce Public Dataset</span>
+      </footer>
+    </main>
+    <script id="dashboard-data" type="application/json">
+      {{ {"monthly": monthly_sales, "categories": categories, "statuses": statuses, "ratings": ratings}|tojson }}
+    </script>
+  </body>
+</html>

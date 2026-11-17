@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: olist-commerce-dashboard
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.seed && gunicorn --workers 2 --threads 4 --timeout 120 'app:create_app()'
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        sync: false

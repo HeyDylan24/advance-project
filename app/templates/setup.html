@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Olist Commerce | Setup required</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main class="setup-shell">
+      <span class="brand-mark">O</span>
+      <p class="eyebrow">SETUP REQUIRED</p>
+      <h1>One last data step</h1>
+      <p>{{ message }}</p>
+      <a class="setup-link" href="/healthz">Check database connection</a>
+    </main>
+  </body>
+</html>
