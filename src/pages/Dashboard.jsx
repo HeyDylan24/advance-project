@@ -278,18 +278,25 @@ function BrazilMap({ rows, selectedState, onSelectState }) {
             <stop offset="0%" stopColor="#b5fff0" stopOpacity=".96" />
             <stop offset="100%" stopColor="#61d8b8" stopOpacity=".84" />
           </radialGradient>
+          <linearGradient id="state-hover" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#56e4d4" />
+            <stop offset="52%" stopColor="#9b7bff" />
+            <stop offset="100%" stopColor="#f08acb" />
+          </linearGradient>
         </defs>
-        {brazilStates.map((state) => {
+        {brazilStates.map((state, index) => {
           const row = values.get(state.code);
           const sales = Number(row?.sales || 0);
           const orders = Number(row?.orders || 0);
           const isSelected = selectedState === state.code;
           const fillOpacity = row ? 0.12 + 0.68 * Math.sqrt(sales / maxSales) : 0.08;
           const radius = row ? 2.5 + 7 * Math.sqrt(orders / maxOrders) : 2;
+          const borderHue = (index * 137.508) % 360;
           return (
             <g
               className={`map-state ${isSelected ? "map-state-selected" : ""}`}
               key={state.code}
+              style={{ "--state-stroke": `hsl(${borderHue} 95% 67%)` }}
               role="button"
               tabIndex={0}
               aria-label={`${state.name}: ${currency(sales)} sales, ${number(orders)} orders`}
@@ -319,12 +326,54 @@ function BrazilRegionalAnalysis({ rows }) {
   const ranked = rows.slice().sort((left, right) => Number(right.sales) - Number(left.sales));
   const totalSales = ranked.reduce((sum, row) => sum + Number(row.sales), 0);
   const totalOrders = ranked.reduce((sum, row) => sum + Number(row.orders), 0);
+  const salesOrders = ranked.reduce((sum, row) => sum + Number(row.sales_orders || 0), 0);
   const leadingStates = ranked.slice(0, 5);
   const leadingStateShare = totalSales
     ? leadingStates.reduce((sum, row) => sum + Number(row.sales), 0) / totalSales * 100
     : 0;
   const selected = ranked.find((row) => row.state === selectedState) || ranked[0];
   const selectedShare = selected && totalSales ? Number(selected.sales) / totalSales * 100 : 0;
+  const totalReviews = ranked.reduce((sum, row) => sum + Number(row.reviews || 0), 0);
+  const brazilAverageReview = totalReviews
+    ? ranked.reduce((sum, row) => sum + Number(row.average_review || 0) * Number(row.reviews || 0), 0) / totalReviews
+    : 0;
+  const eligibleDeliveries = ranked.reduce((sum, row) => sum + Number(row.eligible_deliveries || 0), 0);
+  const onTimeOrders = ranked.reduce((sum, row) => sum + Number(row.on_time_orders || 0), 0);
+  const deliveredOrders = ranked.reduce((sum, row) => sum + Number(row.delivered_orders || 0), 0);
+  const brazilOnTimeRate = eligibleDeliveries ? onTimeOrders / eligibleDeliveries * 100 : 0;
+  const brazilAverageDeliveryDays = deliveredOrders
+    ? ranked.reduce((sum, row) => sum + Number(row.average_delivery_days || 0) * Number(row.delivered_orders || 0), 0) / deliveredOrders
+    : 0;
+  const selectedEligibleDeliveries = Number(selected?.eligible_deliveries || 0);
+  const selectedOnTimeRate = selectedEligibleDeliveries
+    ? Number(selected.on_time_orders || 0) / selectedEligibleDeliveries * 100
+    : null;
+  const stateComparisons = [
+    {
+      label: "AVERAGE ORDER",
+      value: selected?.average_order ? currency(selected.average_order) : "—",
+      brazil: salesOrders ? currency(totalSales / salesOrders) : "—",
+      sample: `${number(selected?.sales_orders || 0)} orders with items`,
+    },
+    {
+      label: "AVERAGE REVIEW",
+      value: selected?.average_review ? `${Number(selected.average_review).toFixed(2)} / 5` : "—",
+      brazil: totalReviews ? `${brazilAverageReview.toFixed(2)} / 5` : "—",
+      sample: `${number(selected?.reviews || 0)} reviews`,
+    },
+    {
+      label: "ON-TIME DELIVERY",
+      value: selectedOnTimeRate === null ? "—" : percent(selectedOnTimeRate),
+      brazil: eligibleDeliveries ? percent(brazilOnTimeRate) : "—",
+      sample: `${number(selectedEligibleDeliveries)} eligible orders`,
+    },
+    {
+      label: "AVERAGE DELIVERY",
+      value: Number(selected?.delivered_orders || 0) ? `${Number(selected.average_delivery_days).toFixed(1)} days` : "—",
+      brazil: deliveredOrders ? `${brazilAverageDeliveryDays.toFixed(1)} days` : "—",
+      sample: `${number(selected?.delivered_orders || 0)} delivered orders`,
+    },
+  ];
 
   return (
     <section className="regional-section" id="regional-analysis">
@@ -359,8 +408,17 @@ function BrazilRegionalAnalysis({ rows }) {
                 <div className="selected-state-metrics">
                   <div><span>ORDERS</span><strong>{number(selected?.orders || 0)}</strong></div>
                   <div><span>SALES SHARE</span><strong>{percent(selectedShare)}</strong></div>
-                  <div><span>AVG. REVIEW</span><strong>{selected?.average_review ? `${Number(selected.average_review).toFixed(2)} / 5` : "—"}</strong></div>
+                  <div><span>ITEM ORDERS</span><strong>{number(selected?.sales_orders || 0)}</strong></div>
                 </div>
+              </div>
+              <div className="regional-benchmarks">
+                <span className="insight-kicker">STATE VS. BRAZIL AVERAGE</span>
+                {stateComparisons.map((comparison) => (
+                  <div className="regional-benchmark-row" key={comparison.label}>
+                    <span>{comparison.label}</span>
+                    <div><strong>{comparison.value}</strong><small>BRAZIL {comparison.brazil} · {comparison.sample}</small></div>
+                  </div>
+                ))}
               </div>
               <div className="concentration-card">
                 <span className="insight-kicker">TOP 5 STATE CONCENTRATION</span>

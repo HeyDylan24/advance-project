@@ -195,6 +195,7 @@ def dashboard_data(
             WITH state_sales AS (
               SELECT cr.customer_state AS state,
                      COUNT(DISTINCT o.order_id)::int AS orders,
+                     COUNT(DISTINCT i.order_id)::int AS sales_orders,
                      COALESCE(SUM(i.price), 0)::float8 AS sales
               FROM customer_regions cr
               JOIN orders o USING (order_id)
@@ -210,11 +211,41 @@ def dashboard_data(
               LEFT JOIN reviews r USING (order_id)
               WHERE (%s::int IS NULL OR EXTRACT(YEAR FROM o.purchased_at) = %s)
               GROUP BY cr.customer_state
+            ), state_delivery AS (
+              SELECT cr.customer_state AS state,
+                     COUNT(*) FILTER (
+                       WHERE o.delivered_at IS NOT NULL
+                         AND o.estimated_delivery_at IS NOT NULL
+                     )::int AS eligible_deliveries,
+                     COUNT(*) FILTER (
+                       WHERE o.delivered_at <= o.estimated_delivery_at
+                         AND o.delivered_at IS NOT NULL
+                         AND o.estimated_delivery_at IS NOT NULL
+                     )::int AS on_time_orders,
+                     COUNT(*) FILTER (
+                       WHERE o.delivered_at IS NOT NULL
+                         AND o.purchased_at IS NOT NULL
+                     )::int AS delivered_orders,
+                     AVG(
+                       EXTRACT(EPOCH FROM (o.delivered_at - o.purchased_at)) / 86400.0
+                     ) FILTER (
+                       WHERE o.delivered_at IS NOT NULL
+                         AND o.purchased_at IS NOT NULL
+                     )::float8 AS average_delivery_days
+              FROM customer_regions cr
+              JOIN orders o USING (order_id)
+              WHERE (%s::int IS NULL OR EXTRACT(YEAR FROM o.purchased_at) = %s)
+              GROUP BY cr.customer_state
             )
             SELECT ss.state, ss.orders, ss.sales,
-                   sr.average_review, sr.reviews
+                   ss.sales / NULLIF(ss.sales_orders, 0)::float8 AS average_order,
+                   ss.sales_orders,
+                   sr.average_review, sr.reviews,
+                   sd.eligible_deliveries, sd.on_time_orders,
+                   sd.delivered_orders, sd.average_delivery_days
             FROM state_sales ss
             LEFT JOIN state_reviews sr USING (state)
+            LEFT JOIN state_delivery sd USING (state)
             ORDER BY ss.sales DESC
         """,
         "delivery_reviews": """

@@ -11,7 +11,7 @@ A React dashboard served by a FastAPI application for the Olist Brazilian E-Comm
 - Inspect canceled-order share, order-status mix, and the complete review-score distribution.
 - Forecast six months of sales with a naïve/seasonal-naïve model selected by rolling one-step backtesting.
 - Explore payment methods, the customer-state sales footprint, hourly/weekday order patterns, and review outcomes by delivery timing.
-- Compare all 27 Brazilian federative units in an interactive sales choropleth with order-volume bubbles, state-level KPIs, and top-five revenue concentration.
+- Compare all 27 Brazilian federative units in an interactive sales choropleth with neon state borders, order-volume bubbles, state-level average order value, review and delivery benchmarks against Brazil-wide averages, and top-five revenue concentration.
 
 Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
 
