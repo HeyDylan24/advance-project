@@ -216,7 +216,6 @@ def dashboard_data(
             FROM state_sales ss
             LEFT JOIN state_reviews sr USING (state)
             ORDER BY ss.sales DESC
-            LIMIT 10
         """,
         "delivery_reviews": """
             SELECT CASE

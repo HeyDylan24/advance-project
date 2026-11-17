@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import brazilStates from "../data/brazilStates";
 
 const palette = ["#5b61d6", "#168b78", "#d18b36", "#ba647a", "#4385a5", "#8d6ab5", "#718b4c", "#c26c43"];
 
@@ -264,6 +265,124 @@ function RegionTable({ rows }) {
   );
 }
 
+function BrazilMap({ rows, selectedState, onSelectState }) {
+  const values = new Map(rows.map((row) => [row.state, row]));
+  const maxSales = Math.max(...rows.map((row) => Number(row.sales)), 1);
+  const maxOrders = Math.max(...rows.map((row) => Number(row.orders)), 1);
+
+  return (
+    <div className="brazil-map-wrap">
+      <svg className="brazil-map" viewBox="0 0 800 720" role="img" aria-label="Brazil map shaded by state sales with circles sized by order volume">
+        <defs>
+          <radialGradient id="order-bubble">
+            <stop offset="0%" stopColor="#b5fff0" stopOpacity=".96" />
+            <stop offset="100%" stopColor="#61d8b8" stopOpacity=".84" />
+          </radialGradient>
+        </defs>
+        {brazilStates.map((state) => {
+          const row = values.get(state.code);
+          const sales = Number(row?.sales || 0);
+          const orders = Number(row?.orders || 0);
+          const isSelected = selectedState === state.code;
+          const fillOpacity = row ? 0.12 + 0.68 * Math.sqrt(sales / maxSales) : 0.08;
+          const radius = row ? 2.5 + 7 * Math.sqrt(orders / maxOrders) : 2;
+          return (
+            <g
+              className={`map-state ${isSelected ? "map-state-selected" : ""}`}
+              key={state.code}
+              role="button"
+              tabIndex={0}
+              aria-label={`${state.name}: ${currency(sales)} sales, ${number(orders)} orders`}
+              onClick={() => onSelectState(state.code)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectState(state.code);
+                }
+              }}
+            >
+              <path d={state.path} style={{ fill: `rgba(125, 108, 255, ${fillOpacity})` }} />
+              {row && <circle className="map-order-bubble" cx={state.x} cy={state.y} r={radius} />}
+              <text className="map-state-label" x={state.x} y={state.y - radius - 4}>{state.code}</text>
+              <title>{state.name} · {currency(sales)} sales · {number(orders)} orders{row?.average_review ? ` · ${Number(row.average_review).toFixed(2)} average rating` : ""}</title>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="map-compass" aria-hidden="true"><span>N</span><i>↑</i></div>
+    </div>
+  );
+}
+
+function BrazilRegionalAnalysis({ rows }) {
+  const [selectedState, setSelectedState] = useState("");
+  const ranked = rows.slice().sort((left, right) => Number(right.sales) - Number(left.sales));
+  const totalSales = ranked.reduce((sum, row) => sum + Number(row.sales), 0);
+  const totalOrders = ranked.reduce((sum, row) => sum + Number(row.orders), 0);
+  const leadingStates = ranked.slice(0, 5);
+  const leadingStateShare = totalSales
+    ? leadingStates.reduce((sum, row) => sum + Number(row.sales), 0) / totalSales * 100
+    : 0;
+  const selected = ranked.find((row) => row.state === selectedState) || ranked[0];
+  const selectedShare = selected && totalSales ? Number(selected.sales) / totalSales * 100 : 0;
+
+  return (
+    <section className="regional-section" id="regional-analysis">
+      <article className="panel regional-panel" aria-label="Brazil state-level sales map">
+        <PanelHeading
+          eyebrow="08 / BRAZIL · STATE-LEVEL ANALYSIS"
+          title="Where commerce happens"
+          detail="Explore the geographic concentration of orders and product sales"
+          action={<span className="panel-unit">27 FEDERATIVE UNITS</span>}
+        />
+        {ranked.length ? (
+          <div className="regional-layout">
+            <div className="map-column">
+              <div className="map-stat-strip">
+                <div><span>STATES WITH ORDERS</span><strong>{ranked.length}<small> / 27</small></strong></div>
+                <div><span>REGIONAL SALES</span><strong>{currency(totalSales)}</strong></div>
+                <div><span>ORDERS MAPPED</span><strong>{number(totalOrders)}</strong></div>
+              </div>
+              <BrazilMap rows={ranked} selectedState={selected?.state} onSelectState={setSelectedState} />
+              <div className="map-legend">
+                <span className="map-legend-title">MAP KEY</span>
+                <span><i className="legend-state-fill" />Fill intensity · sales</span>
+                <span><i className="legend-order-dot" />Circle area · orders</span>
+                <span className="legend-gradient"><i /><b>Lower</b><i /><i /><i /><i /><b>Higher</b></span>
+              </div>
+            </div>
+            <aside className="region-insights">
+              <div className="selected-state-card">
+                <span className="insight-kicker"><i /> SELECTED STATE</span>
+                <div className="selected-state-name"><strong>{selected?.state || "—"}</strong><span>{brazilStates.find((state) => state.code === selected?.state)?.name || "No state data"}</span></div>
+                <div className="selected-state-sales">{currency(selected?.sales || 0)}<small>product sales</small></div>
+                <div className="selected-state-metrics">
+                  <div><span>ORDERS</span><strong>{number(selected?.orders || 0)}</strong></div>
+                  <div><span>SALES SHARE</span><strong>{percent(selectedShare)}</strong></div>
+                  <div><span>AVG. REVIEW</span><strong>{selected?.average_review ? `${Number(selected.average_review).toFixed(2)} / 5` : "—"}</strong></div>
+                </div>
+              </div>
+              <div className="concentration-card">
+                <span className="insight-kicker">TOP 5 STATE CONCENTRATION</span>
+                <strong>{percent(leadingStateShare)}</strong>
+                <div className="concentration-track"><i style={{ width: `${leadingStateShare}%` }} /></div>
+                <p>of mapped product sales come from {leadingStates.length} leading states.</p>
+              </div>
+              <div className="regional-leaders">
+                <div className="leaders-heading"><span>LEADING MARKETS</span><span>SALES</span></div>
+                <RegionTable rows={leadingStates} />
+              </div>
+              <p className="map-method-note">State shading shows item sales; bubbles are sized by order volume and placed at representative state positions—not individual customer coordinates.</p>
+            </aside>
+          </div>
+        ) : (
+          <p className="empty-chart">Regional data is unavailable for this period. Confirm that customer-state data was imported.</p>
+        )}
+      </article>
+    </section>
+  );
+}
+
 function DeliveryReviewComparison({ rows }) {
   const byOutcome = new Map(rows.map((row) => [row.label, row]));
   const onTime = byOutcome.get("On time");
@@ -396,20 +515,51 @@ export default function Dashboard() {
   const currentYear = year || "All years";
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Olist Commerce dashboard home">
+    <div className="workspace">
+      <aside className="sidebar">
+        <a className="sidebar-brand" href="/" aria-label="Olist Commerce dashboard home">
           <span className="brand-mark">O</span>
-          <span>olist<span className="brand-light"> / intelligence</span></span>
+          <span>olist<span className="brand-light"> / lab</span></span>
         </a>
-        <div className="topbar-meta"><span className="live-dot" /> ANALYTICS WORKSPACE</div>
+        <div className="workspace-switcher">
+          <span className="workspace-avatar">OI</span>
+          <span><strong>Commerce intelligence</strong><small>Analytics workspace</small></span>
+          <span className="switcher-chevron">⌄</span>
+        </div>
+        <p className="sidebar-section-label">ANALYZE</p>
+        <nav className="sidebar-nav" aria-label="Dashboard sections">
+          <a className="nav-link nav-link-active" href="#overview"><span className="nav-icon">▦</span>Overview</a>
+          <a className="nav-link" href="#revenue"><span className="nav-icon">⌁</span>Revenue & forecast</a>
+          <a className="nav-link" href="#product-analysis"><span className="nav-icon">◈</span>Product performance</a>
+          <a className="nav-link" href="#customer-insights"><span className="nav-icon">◎</span>Customer insights</a>
+          <a className="nav-link" href="#regional-analysis"><span className="nav-icon">◉</span>Brazil map</a>
+          <a className="nav-link" href="#delivery-review"><span className="nav-icon">↗</span>Delivery & reviews</a>
+          <a className="nav-link" href="#demand-patterns"><span className="nav-icon">▥</span>Demand patterns</a>
+        </nav>
+        <div className="sidebar-spacer" />
+        <div className="dataset-status">
+          <span className="dataset-status-dot" />
+          <span><strong>Dataset connected</strong><small>Olist · PostgreSQL</small></span>
+          <span className="dataset-menu">···</span>
+        </div>
+        <div className="sidebar-profile">
+          <span className="profile-avatar">OL</span>
+          <span><strong>Olist Analytics</strong><small>Research project</small></span>
+          <span className="profile-menu">⌄</span>
+        </div>
+      </aside>
+      <div className="workspace-main">
+        <main className="shell">
+      <header className="topbar">
+        <div className="topbar-breadcrumb"><span>WORKSPACE</span><i>/</i><strong>Commerce overview</strong></div>
+        <div className="topbar-actions"><span className="data-status"><i /> DATA CONNECTED</span><span className="topbar-dataset">OLIST PUBLIC DATASET</span></div>
       </header>
 
       <section className="page-heading">
         <div>
-          <p className="eyebrow">BRAZILIAN E-COMMERCE · EXPLORATORY ANALYSIS</p>
+          <p className="eyebrow"><span className="heading-dot" /> BRAZILIAN E-COMMERCE <i>/</i> EXPLORATORY ANALYSIS</p>
           <h1>Commerce, in context.</h1>
-          <p className="subheading">A data-led view of revenue quality, customer sentiment, and operational performance.</p>
+          <p className="subheading">A research workspace for revenue quality, customer behavior, and operational performance.</p>
         </div>
         <label className="period-control">
           <span>ANALYSIS PERIOD</span>
@@ -429,14 +579,14 @@ export default function Dashboard() {
         {loading && <span className="refresh-indicator">Updating analysis…</span>}
       </div>
 
-      <section className="metric-grid" aria-label="Key performance indicators" aria-busy={loading}>
+      <section className="metric-grid" id="overview" aria-label="Key performance indicators" aria-busy={loading}>
         <MetricCard label="Gross merchandise value" value={currency(metrics.sales)} caption="Product value · freight excluded" icon="R$" tone="revenue" />
         <MetricCard label="Orders analyzed" value={number(metrics.orders)} caption="Unique customer orders" icon="↗" tone="orders" />
         <MetricCard label="Average order value" value={currency(metrics.average_order)} caption="Mean item value per order" icon="Ø" tone="basket" />
         <MetricCard label="Customer rating" value={<>{Number(metrics.average_review).toFixed(2)}<span className="value-unit">/ 5</span></>} caption={`${percent(metrics.five_star_rate)} of reviews are 5-star`} icon="★" tone="rating" />
       </section>
 
-      <section className="chart-grid primary-grid">
+      <section className="chart-grid primary-grid" id="revenue">
         <article className="panel panel-wide" aria-busy={loading}>
           <PanelHeading
             eyebrow="01 / REVENUE MOMENTUM"
@@ -449,7 +599,7 @@ export default function Dashboard() {
           <SalesChart rows={data.monthlySales} />
           <p className="chart-footnote">Month-over-month growth compares each month with the immediately preceding month in the selected period.</p>
         </article>
-        <article className="panel operations-panel" aria-busy={loading}>
+        <article className="panel operations-panel" id="operations" aria-busy={loading}>
           <PanelHeading eyebrow="02 / OPERATIONS" title="Delivery reliability" detail="Speed and promise-keeping, together" />
           <div className="reliability-score">
             <div className="reliability-number">{percent(metrics.on_time_rate)}</div>
@@ -510,7 +660,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      <section className="chart-grid secondary-grid">
+      <section className="chart-grid secondary-grid" id="product-analysis">
         <article className="panel panel-wide" aria-busy={loading}>
           <PanelHeading eyebrow="04 / ASSORTMENT" title="Category performance" detail="Sales contribution, reach, and average item value" action={<span className="panel-unit">TOP 8 BY SALES</span>} />
           <CategoryTable rows={data.categories} />
@@ -526,7 +676,7 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="panel rating-panel" aria-busy={loading}>
+      <section className="panel rating-panel" id="customer-insights" aria-busy={loading}>
         <PanelHeading eyebrow="06 / CUSTOMER VOICE" title="Review score distribution" detail="Ratings reveal the shape of satisfaction—not just its average" action={<span className="panel-unit">{number(data.ratings.reduce((sum, row) => sum + Number(row.value), 0))} REVIEWS</span>} />
         <RatingChart rows={data.ratings} />
       </section>
@@ -536,18 +686,16 @@ export default function Dashboard() {
           <PanelHeading eyebrow="07 / PAYMENT BEHAVIOR" title="How customers pay" detail="Payment value, order reach, and typical installments" />
           <PaymentMix rows={data.payments} />
         </article>
-        <article className="panel" aria-busy={loading}>
-          <PanelHeading eyebrow="08 / GEOGRAPHY" title="Leading customer states" detail="Sales footprint and average customer rating" action={<span className="panel-unit">TOP 10</span>} />
-          <RegionTable rows={data.regions} />
-        </article>
       </section>
 
-      <section className="chart-grid research-grid">
-        <article className="panel" aria-busy={loading}>
+      <BrazilRegionalAnalysis rows={data.regions} />
+
+      <section className="chart-grid research-grid" id="delivery-review">
+        <article className="panel">
           <PanelHeading eyebrow="09 / DELIVERY & SENTIMENT" title="Does delivery timing align with reviews?" detail="Compare score patterns for delivered orders" />
           <DeliveryReviewComparison rows={data.deliveryReviews} />
         </article>
-        <article className="panel" aria-busy={loading}>
+        <article className="panel" id="demand-patterns" aria-busy={loading}>
           <PanelHeading eyebrow="10 / TEMPORAL BEHAVIOR" title="When orders are placed" detail="Order volume by weekday and hour · dataset purchase hour" />
           <DemandHeatmap rows={data.demandHeatmap} />
         </article>
@@ -557,6 +705,8 @@ export default function Dashboard() {
         <span>OLIST COMMERCE INTELLIGENCE <i>·</i> Exploratory analysis</span>
         <span>Source: Olist Brazilian E-Commerce Public Dataset</span>
       </footer>
-    </main>
+        </main>
+      </div>
+    </div>
   );
 }

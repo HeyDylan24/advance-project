@@ -11,12 +11,15 @@ A React dashboard served by a FastAPI application for the Olist Brazilian E-Comm
 - Inspect canceled-order share, order-status mix, and the complete review-score distribution.
 - Forecast six months of sales with a naïve/seasonal-naïve model selected by rolling one-step backtesting.
 - Explore payment methods, the customer-state sales footprint, hourly/weekday order patterns, and review outcomes by delivery timing.
+- Compare all 27 Brazilian federative units in an interactive sales choropleth with order-volume bubbles, state-level KPIs, and top-five revenue concentration.
 
 Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
 
 The time-series view compares a last-observation naïve baseline with a seasonal-naïve baseline using the same expanding-history, one-month-ahead test origins. Seasonal-naïve is considered only when at least 24 monthly observations are available. The model with the lower rolling WAPE is used for the six-month outlook; MAE and WAPE are shown as error summaries. The shaded forecast band is the 90th percentile of rolling one-step absolute errors, not a formal prediction interval. Forecasts are a historical-method demonstration on Olist data ending in 2018, not current-market projections.
 
 The importer also enriches an existing Neon database with payment records and customer-state dimensions. It tracks this enrichment separately from the original orders/items/reviews import, so the existing core dataset is preserved and the added CSVs are imported once. The delivery/review comparison is descriptive and should not be interpreted as a causal estimate.
+
+The Brazil map shades states by product sales and uses circles sized by order volume at representative state positions; it does not plot individual customer locations. Simplified state boundaries are adapted from [Click That 'Hood's Brazil states GeoJSON](https://github.com/codeforgermany/click_that_hood/blob/main/public/data/brazil-states.geojson); the source repository's MIT license is included in [`src/data/LICENSE`](./src/data/LICENSE).
 
 ## Run locally
 
