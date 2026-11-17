@@ -1,46 +1,34 @@
 # Olist Commerce Analytics
 
-A Flask dashboard for the Olist Brazilian E-Commerce Public Dataset. It summarizes item sales, order volume, review scores, delivery performance, product categories, and order status. PostgreSQL (including Neon) stores the imported data.
+A React dashboard served by a FastAPI application for the Olist Brazilian E-Commerce Public Dataset. Neon PostgreSQL stores the imported data. Node.js is used only to build the React frontend; the deployed application server and data importer are Python.
 
 ## Run locally
 
-1. Use Python 3.10 or newer and create a virtual environment.
-2. Install dependencies:
+1. Install Python 3.10 or newer and Node.js 20 or newer.
+2. Install Python dependencies and build the frontend:
 
-   ```powershell
+   ```sh
    python -m pip install -r requirements.txt
+   npm ci
+   npm run build
    ```
 
-3. Set `DATABASE_URL` to a PostgreSQL connection string for a development database. For a quick local check, SQLite also works:
+3. Set `DATABASE_URL` to a PostgreSQL connection string for a development database.
+4. Import the CSV files and start FastAPI:
 
-   ```powershell
-   $env:DATABASE_URL = "sqlite:///olist.db"
-   ```
-
-4. Import the CSV files into the database (the import runs once and skips a database that already contains orders):
-
-   ```powershell
+   ```sh
    python -m app.seed
+   uvicorn app.main:app --reload
    ```
 
-5. Start the dashboard:
+Open <http://127.0.0.1:8000>. For frontend development, run `npm run dev` in a separate terminal; Vite proxies `/api` requests to `http://localhost:3000`, so start the API with `uvicorn app.main:app --reload --port 3000`.
 
-   ```powershell
-   flask --app app:create_app run
-   ```
-
-Open <http://127.0.0.1:5000>.
-
-The seed command expects `olist_orders_dataset.csv`, `olist_order_items_dataset.csv`, `olist_products_dataset.csv`, `product_category_name_translation.csv`, and `olist_order_reviews_dataset.csv` in the repository root.
+The importer expects `olist_orders_dataset.csv`, `olist_order_items_dataset.csv`, `olist_products_dataset.csv`, `product_category_name_translation.csv`, and `olist_order_reviews_dataset.csv` in the repository root.
 
 ## Deploy to Render with Neon
 
-1. In Neon, copy the PostgreSQL connection string for your database. Use the pooled connection string if your project provides one.
-2. In Render, create a **Blueprint** from this GitHub repository and select `render.yaml`.
-3. In the Render service's **Environment** settings, add `DATABASE_URL` and paste the Neon connection string as its secret value. Do not commit the connection string or add it to `render.yaml`.
-4. Deploy. The start command creates the dashboard tables and imports the CSV data before starting Gunicorn. The import is repeat-safe: on subsequent starts it detects existing orders and skips re-importing.
-5. Verify the service's `/healthz` endpoint returns `{"status":"ok"}` and open the Render service URL.
+The included `render.yaml` configures one Python web service. Its build installs the Python dependencies and builds the React frontend. Its start command imports the data and then runs Uvicorn. Configure the full Neon connection string as the Render service's secret `DATABASE_URL` environment variable; do not commit it to source.
 
-If the Render service already exists, add `DATABASE_URL` in its Environment settings and set its build command to `pip install -r requirements.txt`, start command to `python -m app.seed && gunicorn --workers 2 --threads 4 --timeout 120 'app:create_app()'`, and health check path to `/healthz`.
+If configuring the existing Render service manually, choose the Python runtime and repository root as the root directory. Set the build command to `pip install -r requirements.txt && npm ci && npm run build`, the start command to `python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and the health check path to `/api/healthz`.
 
-The first import needs a writable Neon database and can take several minutes. If a failed import leaves any data behind, inspect the database before retrying; the seed command intentionally does not delete or overwrite existing rows.
+The first import can take several minutes. It runs in a database transaction and marks the dataset as imported when complete; subsequent starts skip it. The database advisory lock prevents two deploys from importing simultaneously.
