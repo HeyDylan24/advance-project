@@ -178,6 +178,85 @@ def dashboard_data(
             GROUP BY r.score
             ORDER BY r.score
         """,
+        "payments": """
+            SELECT payment_type AS label,
+                   SUM(payment_value)::float8 AS value,
+                   COUNT(DISTINCT payments.order_id)::int AS orders,
+                   AVG(installments)::float8 AS average_installments,
+                   (SUM(payment_value) / SUM(SUM(payment_value)) OVER () * 100)::float8
+                    AS share
+            FROM payments
+            JOIN orders USING (order_id)
+            WHERE (%s::int IS NULL OR EXTRACT(YEAR FROM purchased_at) = %s)
+            GROUP BY payment_type
+            ORDER BY SUM(payment_value) DESC
+        """,
+        "regions": """
+            WITH state_sales AS (
+              SELECT cr.customer_state AS state,
+                     COUNT(DISTINCT o.order_id)::int AS orders,
+                     COALESCE(SUM(i.price), 0)::float8 AS sales
+              FROM customer_regions cr
+              JOIN orders o USING (order_id)
+              LEFT JOIN order_items i USING (order_id)
+              WHERE (%s::int IS NULL OR EXTRACT(YEAR FROM o.purchased_at) = %s)
+              GROUP BY cr.customer_state
+            ), state_reviews AS (
+              SELECT cr.customer_state AS state,
+                     AVG(r.score)::float8 AS average_review,
+                     COUNT(r.score)::int AS reviews
+              FROM customer_regions cr
+              JOIN orders o USING (order_id)
+              LEFT JOIN reviews r USING (order_id)
+              WHERE (%s::int IS NULL OR EXTRACT(YEAR FROM o.purchased_at) = %s)
+              GROUP BY cr.customer_state
+            )
+            SELECT ss.state, ss.orders, ss.sales,
+                   sr.average_review, sr.reviews
+            FROM state_sales ss
+            LEFT JOIN state_reviews sr USING (state)
+            ORDER BY ss.sales DESC
+            LIMIT 10
+        """,
+        "delivery_reviews": """
+            SELECT CASE
+                     WHEN o.delivered_at <= o.estimated_delivery_at THEN 'On time'
+                     WHEN o.delivered_at > o.estimated_delivery_at THEN 'Late'
+                     ELSE 'Unknown'
+                   END AS label,
+                   COUNT(*)::int AS reviews,
+                   AVG(r.score)::float8 AS average_score,
+                   (COUNT(*) FILTER (WHERE r.score <= 2)::float8
+                    / NULLIF(COUNT(*), 0) * 100)::float8 AS low_score_rate,
+                   (COUNT(*) FILTER (WHERE r.score = 5)::float8
+                    / NULLIF(COUNT(*), 0) * 100)::float8 AS five_star_rate
+            FROM orders o
+            JOIN reviews r USING (order_id)
+            WHERE o.delivered_at IS NOT NULL
+              AND o.estimated_delivery_at IS NOT NULL
+              AND (%s::int IS NULL OR EXTRACT(YEAR FROM o.purchased_at) = %s)
+            GROUP BY label
+            ORDER BY label
+        """,
+        "demand_heatmap": """
+            WITH time_slots AS (
+              SELECT weekday, hour
+              FROM GENERATE_SERIES(0, 6) AS weekdays(weekday)
+              CROSS JOIN GENERATE_SERIES(0, 23) AS hours(hour)
+            ), demand AS (
+              SELECT EXTRACT(DOW FROM purchased_at)::int AS weekday,
+                     EXTRACT(HOUR FROM purchased_at)::int AS hour,
+                     COUNT(*)::int AS orders
+              FROM orders
+              WHERE purchased_at IS NOT NULL
+                AND (%s::int IS NULL OR EXTRACT(YEAR FROM purchased_at) = %s)
+              GROUP BY 1, 2
+            )
+            SELECT ts.weekday, ts.hour, COALESCE(d.orders, 0)::int AS orders
+            FROM time_slots ts
+            LEFT JOIN demand d USING (weekday, hour)
+            ORDER BY ts.weekday, ts.hour
+        """,
         "years": """
             SELECT DISTINCT EXTRACT(YEAR FROM purchased_at)::int AS year
             FROM orders
@@ -201,8 +280,23 @@ def dashboard_data(
             "categories": result["categories"],
             "statuses": result["statuses"],
             "ratings": result["ratings"],
+            "payments": result["payments"],
+            "regions": result["regions"],
+            "deliveryReviews": result["delivery_reviews"],
+            "demandHeatmap": result["demand_heatmap"],
             "years": [row["year"] for row in result["years"]],
-            "forecast": build_forecast(result["monthly_sales"]),
+            "forecast": (
+                build_forecast(result["monthly_sales"])
+                if year is None
+                else {
+                    "available": False,
+                    "reason": "Forecasting uses the complete time series. Select all years to view forecasts.",
+                    "training_months": 0,
+                    "horizon_months": 6,
+                    "backtest": [],
+                    "values": [],
+                }
+            ),
         }
     except Exception as error:
         logger.exception("Unable to load dashboard data")

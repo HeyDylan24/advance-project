@@ -228,6 +228,105 @@ function RatingChart({ rows }) {
   );
 }
 
+function PaymentMix({ rows }) {
+  const max = Math.max(...rows.map((row) => Number(row.value)), 1);
+  return (
+    <div className="payment-list">
+      {rows.map((row, index) => (
+        <div className="payment-row" key={row.label}>
+          <div className="payment-label">
+            <i style={{ background: palette[index % palette.length] }} />
+            <span>{row.label.replaceAll("_", " ")}</span>
+            <strong>{percent(row.share)}</strong>
+          </div>
+          <div className="payment-track"><span style={{ width: `${(Number(row.value) / max) * 100}%`, background: palette[index % palette.length] }} /></div>
+          <div className="payment-detail"><span>{currency(row.value)}</span><span>{number(row.orders)} orders</span><span>{Number(row.average_installments).toFixed(1)}× avg.</span></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RegionTable({ rows }) {
+  const max = Math.max(...rows.map((row) => Number(row.sales)), 1);
+  return (
+    <div className="region-list">
+      {rows.map((row, index) => (
+        <div className="region-row" key={row.state}>
+          <span className="region-rank">{String(index + 1).padStart(2, "0")}</span>
+          <strong className="region-state">{row.state}</strong>
+          <div className="region-bar"><span style={{ width: `${(Number(row.sales) / max) * 100}%` }} /></div>
+          <span className="region-sales">{currency(row.sales)}</span>
+          <span className="region-review">{row.average_review ? `${Number(row.average_review).toFixed(2)} ★` : "—"}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DeliveryReviewComparison({ rows }) {
+  const byOutcome = new Map(rows.map((row) => [row.label, row]));
+  const onTime = byOutcome.get("On time");
+  const late = byOutcome.get("Late");
+
+  if (!onTime || !late) {
+    return <p className="empty-chart">Not enough delivered orders with reviews to compare timing groups.</p>;
+  }
+
+  const scoreDifference = Number(onTime.average_score) - Number(late.average_score);
+  return (
+    <div className="delivery-review">
+      <div className="comparison-head"><span>DELIVERY GROUP</span><span>REVIEWS</span><span>AVG SCORE</span><span>LOW SCORES</span></div>
+      {[onTime, late].map((row) => (
+        <div className={`comparison-row ${row.label === "Late" ? "comparison-late" : ""}`} key={row.label}>
+          <strong><i />{row.label}</strong>
+          <span>{number(row.reviews)}</span>
+          <span className="comparison-score">{Number(row.average_score).toFixed(2)} <small>/ 5</small></span>
+          <span>{percent(row.low_score_rate)}</span>
+        </div>
+      ))}
+      <div className="association-callout">
+        <span className="association-symbol">{scoreDifference >= 0 ? "↘" : "↗"}</span>
+        <p>On-time orders average <strong>{Math.abs(scoreDifference).toFixed(2)} {scoreDifference >= 0 ? "points higher" : "points lower"}</strong> than late orders. This is an observed association, not evidence of causation.</p>
+      </div>
+    </div>
+  );
+}
+
+function DemandHeatmap({ rows }) {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const lookup = new Map(rows.map((row) => [`${row.weekday}-${row.hour}`, Number(row.orders)]));
+  const max = Math.max(...rows.map((row) => Number(row.orders)), 1);
+
+  return (
+    <div className="heatmap-scroll">
+      <div className="heatmap">
+        <div className="heatmap-corner" />
+        {Array.from({ length: 24 }, (_, hour) => (
+          <span className="heatmap-hour" key={hour}>{hour % 3 === 0 ? String(hour).padStart(2, "0") : ""}</span>
+        ))}
+        {days.map((day, weekday) => (
+          <div className="heatmap-row" key={day}>
+            <span className="heatmap-day">{day}</span>
+            {Array.from({ length: 24 }, (_, hour) => {
+              const orders = lookup.get(`${weekday}-${hour}`) || 0;
+              return (
+                <span
+                  className="heatmap-cell"
+                  key={hour}
+                  style={{ "--intensity": orders ? Math.max(0.12, orders / max) : 0 }}
+                  title={`${day}, ${String(hour).padStart(2, "0")}:00 · ${number(orders)} orders`}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="heatmap-scale"><span>Fewer orders</span><i /><i /><i /><i /><i /><span>More orders</span></div>
+    </div>
+  );
+}
+
 function SetupMessage({ message }) {
   return (
     <main className="setup-shell">
@@ -364,51 +463,60 @@ export default function Dashboard() {
         </article>
       </section>
 
-      {data.forecast.available && (
+      {(data.forecast.available || year) && (
         <section className="forecast-section">
           <article className="panel forecast-panel" aria-busy={loading}>
-            <PanelHeading
-              eyebrow="02 / TIME-SERIES LAB"
-              title="Monthly sales forecast"
-              detail={`Next ${data.forecast.horizon_months} months after ${data.forecast.last_observed_month} · ${data.forecast.training_months} monthly observations`}
-              action={<span className="model-badge">{data.forecast.model_label.toUpperCase()} · BACKTESTED</span>}
-            />
-            <div className="forecast-legend">
-              <span><i className="legend-observed" />Observed</span>
-              <span><i className="legend-projection" />Forecast</span>
-              <span><i className="legend-range" />Empirical error range</span>
-            </div>
-            <ForecastChart history={data.monthlySales} forecast={data.forecast} />
-            <div className="model-diagnostics">
-              <div className="diagnostic-intro">
-                <span className="eyebrow">ROLLING ONE-STEP BACKTEST</span>
-                <p>Model choice is based on historical forecast error, not training fit.</p>
-              </div>
-              <div className="model-score-grid">
-                {data.forecast.backtest.map((score) => (
-                  <div className={`model-score ${score.model === data.forecast.model ? "model-score-selected" : ""}`} key={score.model}>
-                    <span>{score.model === "seasonal_naive" ? "Seasonal naïve" : "Naïve baseline"}</span>
-                    <strong>{score.wape === null ? "—" : percent(score.wape)}</strong>
-                    <small>WAPE · MAE {currency(score.mae)} · {score.observations} tests</small>
+            {data.forecast.available ? (
+              <>
+                <PanelHeading
+                  eyebrow="03 / TIME-SERIES LAB"
+                  title="Monthly sales forecast"
+                  detail={`Next ${data.forecast.horizon_months} months after ${data.forecast.last_observed_month} · ${data.forecast.training_months} monthly observations`}
+                  action={<span className="model-badge">{data.forecast.model_label.toUpperCase()} · BACKTESTED</span>}
+                />
+                <div className="forecast-legend">
+                  <span><i className="legend-observed" />Observed</span>
+                  <span><i className="legend-projection" />Forecast</span>
+                  <span><i className="legend-range" />Empirical error range</span>
+                </div>
+                <ForecastChart history={data.monthlySales} forecast={data.forecast} />
+                <div className="model-diagnostics">
+                  <div className="diagnostic-intro">
+                    <span className="eyebrow">ROLLING ONE-STEP BACKTEST</span>
+                    <p>Model choice is based on historical forecast error, not training fit.</p>
                   </div>
-                ))}
-              </div>
-              <div className="interval-note">
-                <span className="interval-icon">i</span>
-                <p><strong>Uncertainty, made visible.</strong> Shaded range uses the 90th percentile of rolling one-step absolute errors; it is an empirical reference, not a formal prediction interval.</p>
-              </div>
-            </div>
+                  <div className="model-score-grid">
+                    {data.forecast.backtest.map((score) => (
+                      <div className={`model-score ${score.model === data.forecast.model ? "model-score-selected" : ""}`} key={score.model}>
+                        <span>{score.model === "seasonal_naive" ? "Seasonal naïve" : "Naïve baseline"}</span>
+                        <strong>{score.wape === null ? "—" : percent(score.wape)}</strong>
+                        <small>WAPE · MAE {currency(score.mae)} · {score.observations} tests</small>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="interval-note">
+                    <span className="interval-icon">i</span>
+                    <p><strong>Uncertainty, made visible.</strong> Shaded range uses the 90th percentile of rolling one-step absolute errors; it is an empirical reference, not a formal prediction interval.</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <PanelHeading eyebrow="03 / TIME-SERIES LAB" title="Monthly sales forecast" detail="Forecast uses chronological history, not a single-year slice." />
+                <p className="forecast-unavailable">{data.forecast.reason}</p>
+              </>
+            )}
           </article>
         </section>
       )}
 
       <section className="chart-grid secondary-grid">
         <article className="panel panel-wide" aria-busy={loading}>
-          <PanelHeading eyebrow="03 / ASSORTMENT" title="Category performance" detail="Sales contribution, reach, and average item value" action={<span className="panel-unit">TOP 8 BY SALES</span>} />
+          <PanelHeading eyebrow="04 / ASSORTMENT" title="Category performance" detail="Sales contribution, reach, and average item value" action={<span className="panel-unit">TOP 8 BY SALES</span>} />
           <CategoryTable rows={data.categories} />
         </article>
         <article className="panel status-panel" aria-busy={loading}>
-          <PanelHeading eyebrow="04 / ORDER FULFILLMENT" title="Order status mix" detail="Share of all orders in the selected period" />
+          <PanelHeading eyebrow="05 / ORDER FULFILLMENT" title="Order status mix" detail="Share of all orders in the selected period" />
           <StatusSummary rows={data.statuses} />
           <div className="risk-callout">
             <span className="risk-label">CANCELLATION RATE</span>
@@ -419,8 +527,30 @@ export default function Dashboard() {
       </section>
 
       <section className="panel rating-panel" aria-busy={loading}>
-        <PanelHeading eyebrow="05 / CUSTOMER VOICE" title="Review score distribution" detail="Ratings reveal the shape of satisfaction—not just its average" action={<span className="panel-unit">{number(data.ratings.reduce((sum, row) => sum + Number(row.value), 0))} REVIEWS</span>} />
+        <PanelHeading eyebrow="06 / CUSTOMER VOICE" title="Review score distribution" detail="Ratings reveal the shape of satisfaction—not just its average" action={<span className="panel-unit">{number(data.ratings.reduce((sum, row) => sum + Number(row.value), 0))} REVIEWS</span>} />
         <RatingChart rows={data.ratings} />
+      </section>
+
+      <section className="chart-grid research-grid">
+        <article className="panel" aria-busy={loading}>
+          <PanelHeading eyebrow="07 / PAYMENT BEHAVIOR" title="How customers pay" detail="Payment value, order reach, and typical installments" />
+          <PaymentMix rows={data.payments} />
+        </article>
+        <article className="panel" aria-busy={loading}>
+          <PanelHeading eyebrow="08 / GEOGRAPHY" title="Leading customer states" detail="Sales footprint and average customer rating" action={<span className="panel-unit">TOP 10</span>} />
+          <RegionTable rows={data.regions} />
+        </article>
+      </section>
+
+      <section className="chart-grid research-grid">
+        <article className="panel" aria-busy={loading}>
+          <PanelHeading eyebrow="09 / DELIVERY & SENTIMENT" title="Does delivery timing align with reviews?" detail="Compare score patterns for delivered orders" />
+          <DeliveryReviewComparison rows={data.deliveryReviews} />
+        </article>
+        <article className="panel" aria-busy={loading}>
+          <PanelHeading eyebrow="10 / TEMPORAL BEHAVIOR" title="When orders are placed" detail="Order volume by weekday and hour · dataset purchase hour" />
+          <DemandHeatmap rows={data.demandHeatmap} />
+        </article>
       </section>
 
       <footer>
