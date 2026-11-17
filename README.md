@@ -9,8 +9,11 @@ A React dashboard served by a FastAPI application for the Olist Brazilian E-Comm
 - Compare leading product categories by sales, order reach, average item price, and share of period sales.
 - Assess delivery reliability with on-time rate plus mean and median delivery time.
 - Inspect canceled-order share, order-status mix, and the complete review-score distribution.
+- Forecast six months of sales with a naïve/seasonal-naïve model selected by rolling one-step backtesting.
 
 Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
+
+The time-series view compares a last-observation naïve baseline with a seasonal-naïve baseline using the same expanding-history, one-month-ahead test origins. Seasonal-naïve is considered only when at least 24 monthly observations are available. The model with the lower rolling WAPE is used for the six-month outlook; MAE and WAPE are shown as error summaries. The shaded forecast band is the 90th percentile of rolling one-step absolute errors, not a formal prediction interval. Forecasts are a historical-method demonstration on Olist data ending in 2018, not current-market projections.
 
 ## Run locally
 

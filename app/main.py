@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from psycopg.rows import dict_row
 
 from app.database import create_pool
+from app.forecast import build_forecast
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -201,6 +202,7 @@ def dashboard_data(
             "statuses": result["statuses"],
             "ratings": result["ratings"],
             "years": [row["year"] for row in result["years"]],
+            "forecast": build_forecast(result["monthly_sales"]),
         }
     except Exception as error:
         logger.exception("Unable to load dashboard data")

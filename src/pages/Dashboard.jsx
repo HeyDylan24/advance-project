@@ -101,6 +101,71 @@ function SalesChart({ rows }) {
   );
 }
 
+function ForecastChart({ history, forecast }) {
+  const observed = history.slice(-18);
+  const projected = forecast.values;
+  const values = [
+    ...observed.map((point) => Number(point.value)),
+    ...projected.map((point) => Number(point.upper)),
+  ];
+  const max = Math.max(...values, 1);
+  const width = 760;
+  const height = 235;
+  const padding = { top: 16, right: 16, bottom: 38, left: 80 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const combined = [
+    ...observed.map((point) => ({ ...point, forecast: false })),
+    ...projected.map((point) => ({ ...point, forecast: true })),
+  ];
+  const points = combined.map((point, index) => ({
+    ...point,
+    x: padding.left + (combined.length === 1 ? plotWidth / 2 : (index / (combined.length - 1)) * plotWidth),
+    y: padding.top + plotHeight - (Number(point.value) / max) * plotHeight,
+  }));
+  const observedPoints = points.filter((point) => !point.forecast);
+  const forecastPoints = points.filter((point) => point.forecast);
+  const anchor = observedPoints.at(-1);
+  const forecastLine = [anchor, ...forecastPoints].map((point) => `${point.x},${point.y}`).join(" ");
+  const upper = forecastPoints.map((point) => `${point.x},${padding.top + plotHeight - (Number(point.upper) / max) * plotHeight}`);
+  const lower = forecastPoints.slice().reverse().map((point) => `${point.x},${padding.top + plotHeight - (Number(point.lower) / max) * plotHeight}`);
+  const band = [...upper, ...lower].join(" ");
+  const observedLine = observedPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const labelIndexes = new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]);
+
+  return (
+    <div className="chart-wrap forecast-chart">
+      <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${forecast.horizon_months}-month sales forecast with empirical error band`}>
+        {[0, 0.5, 1].map((tick) => {
+          const y = padding.top + plotHeight * (1 - tick);
+          return (
+            <g key={tick}>
+              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} className="grid-line" />
+              <text x={padding.left - 10} y={y + 4} textAnchor="end" className="axis-label">{currency(max * tick)}</text>
+            </g>
+          );
+        })}
+        <polygon points={band} className="forecast-band" />
+        <polyline points={observedLine} fill="none" stroke="#85908a" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline points={forecastLine} className="forecast-line" />
+        {observedPoints.map((point, index) => (
+          <g key={`observed-${point.label}`}>
+            <circle className="observed-point" cx={point.x} cy={point.y} r="3" />
+            {labelIndexes.has(index) && <text x={point.x} y={height - 10} textAnchor="middle" className="axis-label">{point.label}</text>}
+          </g>
+        ))}
+        {forecastPoints.map((point, index) => (
+          <g key={`forecast-${point.label}`}>
+            <circle className="forecast-point" cx={point.x} cy={point.y} r="4" />
+            <title>{point.label}: {currency(point.value)} · empirical range {currency(point.lower)}–{currency(point.upper)}</title>
+            {labelIndexes.has(observedPoints.length + index) && <text x={point.x} y={height - 10} textAnchor="middle" className="axis-label">{point.label}</text>}
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 function CategoryTable({ rows }) {
   if (!rows.length) return <p className="empty-chart">No category data is available for this period.</p>;
   return (
@@ -298,6 +363,44 @@ export default function Dashboard() {
           <p className="analysis-note"><strong>Why both?</strong> Median is less affected by unusually delayed orders than the mean.</p>
         </article>
       </section>
+
+      {data.forecast.available && (
+        <section className="forecast-section">
+          <article className="panel forecast-panel" aria-busy={loading}>
+            <PanelHeading
+              eyebrow="02 / TIME-SERIES LAB"
+              title="Monthly sales forecast"
+              detail={`Next ${data.forecast.horizon_months} months after ${data.forecast.last_observed_month} · ${data.forecast.training_months} monthly observations`}
+              action={<span className="model-badge">{data.forecast.model_label.toUpperCase()} · BACKTESTED</span>}
+            />
+            <div className="forecast-legend">
+              <span><i className="legend-observed" />Observed</span>
+              <span><i className="legend-projection" />Forecast</span>
+              <span><i className="legend-range" />Empirical error range</span>
+            </div>
+            <ForecastChart history={data.monthlySales} forecast={data.forecast} />
+            <div className="model-diagnostics">
+              <div className="diagnostic-intro">
+                <span className="eyebrow">ROLLING ONE-STEP BACKTEST</span>
+                <p>Model choice is based on historical forecast error, not training fit.</p>
+              </div>
+              <div className="model-score-grid">
+                {data.forecast.backtest.map((score) => (
+                  <div className={`model-score ${score.model === data.forecast.model ? "model-score-selected" : ""}`} key={score.model}>
+                    <span>{score.model === "seasonal_naive" ? "Seasonal naïve" : "Naïve baseline"}</span>
+                    <strong>{score.wape === null ? "—" : percent(score.wape)}</strong>
+                    <small>WAPE · MAE {currency(score.mae)} · {score.observations} tests</small>
+                  </div>
+                ))}
+              </div>
+              <div className="interval-note">
+                <span className="interval-icon">i</span>
+                <p><strong>Uncertainty, made visible.</strong> Shaded range uses the 90th percentile of rolling one-step absolute errors; it is an empirical reference, not a formal prediction interval.</p>
+              </div>
+            </div>
+          </article>
+        </section>
+      )}
 
       <section className="chart-grid secondary-grid">
         <article className="panel panel-wide" aria-busy={loading}>

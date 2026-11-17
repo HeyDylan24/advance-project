@@ -77,13 +77,40 @@ h2 { margin: 0; color: #263231; font: 700 14px Manrope, sans-serif; letter-spaci
 .trend-up { background: #edf6f1; color: #27765e; }
 .trend-down { background: #faf0ee; color: #a2524b; }
 .trend-neutral { background: #f2f3f6; color: #777e88; }
+.forecast-section { margin: 0 0 14px; }
+.forecast-panel { padding-bottom: 18px; }
+.model-badge { flex: 0 0 auto; padding: 6px 8px; border: 1px solid #dfe1f2; border-radius: 5px; background: #f4f4fb; color: #575eae; font: 8px "DM Mono", monospace; letter-spacing: .35px; }
+.forecast-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 6px 0 0; color: #7d8781; font-size: 9px; }
+.forecast-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.forecast-legend i { width: 15px; height: 3px; border-radius: 3px; }
+.legend-observed { background: #85908a; }
+.legend-projection { background: #535bc2; }
+.forecast-legend .legend-range { height: 9px; border: 1px solid #cdd0eb; background: #ececf8; }
 .chart-wrap { position: relative; height: 245px; }
 .chart-tall { height: 260px; }
+.forecast-chart { height: 235px; margin-top: 4px; }
 .chart-svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .grid-line { stroke: #eceeea; stroke-width: 1; }
 .axis-label { fill: #929a95; font: 9px "DM Mono", monospace; }
 .chart-point { fill: white; stroke: #5b61d6; stroke-width: 2; }
 .chart-point:hover { r: 6; }
+.forecast-band { fill: rgba(83, 91, 194, .12); stroke: none; }
+.forecast-line { fill: none; stroke: #535bc2; stroke-width: 2.5; stroke-dasharray: 6 5; stroke-linejoin: round; stroke-linecap: round; }
+.observed-point { fill: #fff; stroke: #85908a; stroke-width: 2; }
+.forecast-point { fill: #fff; stroke: #535bc2; stroke-width: 2; }
+.model-diagnostics { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(280px, 1.2fr); gap: 16px 24px; align-items: center; padding-top: 15px; border-top: 1px solid var(--line); }
+.diagnostic-intro .eyebrow { margin-bottom: 5px; font-size: 8px; }
+.diagnostic-intro p { margin: 0; color: #89928c; font-size: 9px; line-height: 1.45; }
+.model-score-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.model-score { display: grid; min-width: 118px; gap: 3px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fbfbf9; }
+.model-score-selected { border-color: #d7d9ee; background: #f7f7fc; }
+.model-score > span { color: #77817b; font-size: 8px; }
+.model-score > strong { color: #303b37; font: 600 15px Manrope, sans-serif; }
+.model-score > small { color: #929a95; font-size: 8px; }
+.interval-note { display: flex; grid-column: 1 / -1; align-items: start; gap: 8px; padding: 9px 10px; border: 1px solid #ecebe3; border-radius: 6px; background: #faf9f5; }
+.interval-icon { width: 15px; height: 15px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid #d9d4bf; border-radius: 50%; color: #877c56; font: 9px Georgia, serif; }
+.interval-note p { margin: 0; color: #85877c; font-size: 9px; line-height: 1.55; }
+.interval-note strong { color: #5f6258; }
 .chart-footnote { margin: 1px 0 0; color: #949c97; font-size: 9px; line-height: 1.5; }
 .empty-chart { padding: 24px 0; color: var(--muted); font-size: 11px; }
 .reliability-score { display: flex; align-items: center; gap: 12px; padding: 17px 0 14px; }
@@ -147,6 +174,8 @@ footer i { padding: 0 3px; color: #c3a45e; font-style: normal; }
   .chart-grid, .secondary-grid { grid-template-columns: minmax(0, 1fr) minmax(250px, .8fr); gap: 11px; }
   .panel { padding: 16px; }
   .metric-value { font-size: 20px; }
+  .model-diagnostics { grid-template-columns: 1fr; gap: 12px; }
+  .interval-note { grid-column: auto; }
 }
 
 @media (max-width: 700px) {
@@ -157,6 +186,7 @@ footer i { padding: 0 3px; color: #c3a45e; font-style: normal; }
   .category-table { min-width: 535px; }
   .chart-wrap { height: 220px; }
   .chart-tall { height: 235px; }
+  .forecast-chart { height: 210px; }
 }
 
 @media (max-width: 480px) {
@@ -184,6 +214,9 @@ footer i { padding: 0 3px; color: #c3a45e; font-style: normal; }
   .trend-badge { padding: 5px; font-size: 8px; }
   .chart-wrap { height: 205px; }
   .chart-tall { height: 220px; }
+  .forecast-chart { height: 195px; }
+  .forecast-legend { gap: 10px; font-size: 8px; }
+  .model-score { min-width: 105px; }
   .axis-label { font-size: 8px; }
   .rating-bars { padding-right: 0; padding-left: 0; }
   footer { flex-direction: column; line-height: 1.5; }
