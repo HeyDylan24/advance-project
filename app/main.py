@@ -10,6 +10,7 @@ from psycopg.rows import dict_row
 
 from app.database import create_pool
 from app.forecast import build_forecast
+from app.workspace import ensure_workspace_schema, router as workspace_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,15 +21,17 @@ DIST_DIR = Path(__file__).resolve().parent.parent / "dist"
 async def lifespan(app: FastAPI):
     pool = create_pool()
     pool.open()
-    pool.wait()
-    app.state.db_pool = pool
     try:
+        pool.wait()
+        ensure_workspace_schema(pool)
+        app.state.db_pool = pool
         yield
     finally:
         pool.close()
 
 
 app = FastAPI(title="Olist Commerce Analytics", lifespan=lifespan)
+app.include_router(workspace_router)
 
 
 @app.get("/api/healthz")

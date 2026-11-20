@@ -504,9 +504,10 @@ function DemandHeatmap({ rows }) {
   );
 }
 
-function SetupMessage({ message }) {
+function SetupMessage({ message, onBackToPortal }) {
   return (
     <main className="setup-shell">
+      {onBackToPortal && <button className="portal-back" type="button" onClick={onBackToPortal}>← Analyst inbox</button>}
       <span className="brand-mark">O</span>
       <p className="eyebrow">DASHBOARD NOT READY</p>
       <h1>We could not load the analysis</h1>
@@ -516,7 +517,7 @@ function SetupMessage({ message }) {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onBackToPortal }) {
   const [data, setData] = useState(null);
   const [year, setYear] = useState("");
   const [loading, setLoading] = useState(true);
@@ -556,7 +557,7 @@ export default function Dashboard() {
     [data],
   );
 
-  if (error) return <SetupMessage message={error} />;
+  if (error) return <SetupMessage message={error} onBackToPortal={onBackToPortal} />;
   if (!data) {
     return (
       <main className="loading-shell" aria-live="polite">
@@ -610,7 +611,11 @@ export default function Dashboard() {
         <main className="shell">
       <header className="topbar">
         <div className="topbar-breadcrumb"><span>WORKSPACE</span><i>/</i><strong>Commerce overview</strong></div>
-        <div className="topbar-actions"><span className="data-status"><i /> DATA CONNECTED</span><span className="topbar-dataset">OLIST PUBLIC DATASET</span></div>
+        <div className="topbar-actions">
+          {onBackToPortal && <button className="portal-back" type="button" onClick={onBackToPortal}>← Analyst inbox</button>}
+          <span className="data-status"><i /> DATA CONNECTED</span>
+          <span className="topbar-dataset">OLIST PUBLIC DATASET</span>
+        </div>
       </header>
 
       <section className="page-heading">

@@ -23,7 +23,7 @@ The Brazil map shades states by product sales and uses circles sized by order vo
 
 ## Run locally
 
-1. Install Python 3.10 or newer and Node.js 20 or newer.
+1. Install Python 3.10 or newer and Node.js 20.9 or newer.
 2. Install Python dependencies and build the frontend:
 
    ```sh
@@ -51,3 +51,26 @@ The included `render.yaml` configures one Python web service. Its build installs
 If configuring the existing Render service manually, choose the Python runtime and repository root as the root directory. Set the build command to `pip install -r requirements.txt && npm ci && npm run build`, the start command to `python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and the health check path to `/api/healthz`.
 
 The first import can take several minutes. It runs in a database transaction and marks the dataset as imported when complete; subsequent starts skip it. The database advisory lock prevents two deploys from importing simultaneously.
+
+## Client and analyst workspaces
+
+The app also supports Clerk-authenticated client and analyst accounts. Clients can submit an analysis request and attach up to 10 CSV or ZIP files (500 MB each). Analysts can view requests and accept or decline them. Accepting a request does not execute analysis: the analyst writes the analysis in their IDE and deploys a code-defined dashboard tab.
+
+Neon stores both request metadata and file contents. Files are split into 8 MB chunks and stored as PostgreSQL `BYTEA` rows; downloads are streamed back in chunks. This avoids loading a full 500 MB file into application memory. ZIP files are not extracted by the app. Large uploads consume Neon database storage and transfer, so monitor the database's storage limits and usage.
+
+Configure these environment variables for both local/deployed environments as appropriate:
+
+- `VITE_CLERK_PUBLISHABLE_KEY` for the frontend.
+- `CLERK_JWKS_URL` and `CLERK_ISSUER` for backend JWT verification.
+
+For Vite, the publishable key must use the `VITE_CLERK_PUBLISHABLE_KEY` name; a `NEXT_PUBLIC_` prefix is not read. No Clerk secret key is used by this app. For local development, put the publishable key in the ignored `.env.local` file and set the backend Clerk variables in the FastAPI process environment.
+
+In Clerk, set each user's **public metadata** `role` to `client` or `analyst`, and add a session-token custom claim mapping public metadata into a signed `metadata` claim (for example, `{"metadata":"{{user.public_metadata}}"}`). Set the frontend's Clerk sign-in allowed origins to include the deployed domain and local development origin. Never commit Clerk or storage secret keys.
+
+The workspace tables are created by the FastAPI app on startup. For Render, add the Clerk variables to the service before enabling client accounts. New analyst tabs are registered in `src/analysisTabs.js`. Client-facing tabs must include the target Clerk `clientUserId` so other clients cannot see them, for example:
+
+```js
+{ id: "repeat-purchases", label: "Repeat purchases", clientUserId: "user_...", Component: RepeatPurchaseAnalysis }
+```
+
+Implement each analysis as a React view in the IDE and deploy it with the app.
