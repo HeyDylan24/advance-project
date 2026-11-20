@@ -610,3 +610,36 @@ footer { color: #788291; }
   .comparison-head, .comparison-row { grid-template-columns: 1fr .65fr .8fr .8fr; gap: 5px; }
   footer { flex-direction: column; line-height: 1.5; }
 }
+
+.chart-explanation { margin-top: 12px; border-top: 1px solid #29303a; }
+.chart-explanation summary { display: flex; align-items: center; gap: 8px; padding-top: 10px; color: #a6aebc; font-size: 9px; cursor: pointer; list-style: none; }
+.chart-explanation summary::-webkit-details-marker { display: none; }
+.chart-explanation summary::before { display: grid; width: 15px; height: 15px; flex: 0 0 auto; place-items: center; border: 1px solid #383b50; border-radius: 4px; color: #b7aaff; content: "+"; font: 10px "DM Mono", monospace; }
+.chart-explanation[open] summary::before { content: "-"; }
+.chart-explanation summary:focus-visible { outline: 2px solid #9b8cff; outline-offset: 3px; }
+.chart-explanation p { margin: 9px 0 0; padding: 9px 10px; border-left: 2px solid #8e7bf4; border-radius: 0 5px 5px 0; background: rgba(99, 83, 169, .1); color: #929baa; font-size: 9px; line-height: 1.55; }
+.chart-explanation strong { color: #d7dbe5; font-weight: 600; }
+.bq-period { display: grid; min-width: 185px; gap: 6px; padding: 9px 11px; border: 1px solid #2c3340; border-radius: 6px; background: #151a23; }
+.bq-period span { color: #828b9a; font: 7px "DM Mono", monospace; letter-spacing: .55px; }
+.bq-period strong { color: #e0e3eb; font: 500 9px "DM Mono", monospace; }
+.bq-trend-chart { height: 245px; }
+.bq-bar-list { display: grid; gap: 12px; margin: 0; padding: 8px 0 2px; list-style: none; }
+.bq-bar-list li { min-width: 0; }
+.bq-bar-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 9px; margin-bottom: 5px; }
+.bq-bar-heading > span { overflow: hidden; color: #c4cad5; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; text-transform: capitalize; }
+.bq-bar-heading strong { color: #e2e5ed; font: 500 9px "DM Mono", monospace; }
+.bq-bar-heading small { min-width: 43px; color: #8b94a2; font: 7px "DM Mono", monospace; text-align: right; }
+.bq-bar-track { height: 5px; overflow: hidden; border-radius: 5px; background: #292f39; }
+.bq-bar-track span { display: block; height: 100%; border-radius: inherit; background: var(--bar-color); }
+.bq-pulse { display: grid; gap: 10px; padding: 4px 0 2px; }
+.bq-pulse > div { display: grid; gap: 5px; padding: 10px 11px; border: 1px solid #292f3a; border-radius: 6px; background: #141a22; }
+.bq-pulse span { color: #858e9d; font: 7px "DM Mono", monospace; letter-spacing: .45px; }
+.bq-pulse strong { color: #e5e7ee; font: 600 16px Manrope, sans-serif; }
+.bq-pulse small { color: #858e9d; font-size: 8px; line-height: 1.45; }
+
+@media (max-width: 560px) {
+  .bq-period { width: 100%; }
+  .bq-bar-heading { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; }
+  .bq-bar-heading small { grid-column: 2; }
+  .bq-trend-chart { height: 210px; }
+}

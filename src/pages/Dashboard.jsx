@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import brazilStates from "../data/brazilStates";
+import ChartExplanation from "../ChartExplanation.jsx";
 
 const palette = ["#5b61d6", "#168b78", "#d18b36", "#ba647a", "#4385a5", "#8d6ab5", "#718b4c", "#c26c43"];
 
@@ -436,6 +437,12 @@ function BrazilRegionalAnalysis({ rows }) {
         ) : (
           <p className="empty-chart">Regional data is unavailable for this period. Confirm that customer-state data was imported.</p>
         )}
+        <ChartExplanation
+          question="Which Brazilian states contribute most to sales?"
+          inference={leadingStates.length
+            ? `${leadingStates[0].state} is the largest market at ${currency(leadingStates[0].sales)}. The top ${leadingStates.length} states account for ${percent(leadingStateShare)} of mapped product sales.`
+            : "No regional sales are available for this period."}
+        />
       </article>
     </section>
   );
@@ -572,6 +579,36 @@ export default function Dashboard({ onBackToPortal }) {
     ? new Date(metrics.latest_purchase).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : null;
   const currentYear = year || "All years";
+  const peakMonth = data.monthlySales.reduce(
+    (best, row) => !best || Number(row.value) > Number(best.value) ? row : best,
+    null,
+  );
+  const topCategory = data.categories.reduce(
+    (best, row) => !best || Number(row.sales) > Number(best.sales) ? row : best,
+    null,
+  );
+  const topStatus = data.statuses.reduce(
+    (best, row) => !best || Number(row.value) > Number(best.value) ? row : best,
+    null,
+  );
+  const reviewCount = data.ratings.reduce((sum, row) => sum + Number(row.value), 0);
+  const lowReviewCount = data.ratings
+    .filter((row) => Number(row.label) <= 2)
+    .reduce((sum, row) => sum + Number(row.value), 0);
+  const topPayment = data.payments.reduce(
+    (best, row) => !best || Number(row.value) > Number(best.value) ? row : best,
+    null,
+  );
+  const demandPeak = data.demandHeatmap.reduce(
+    (best, row) => !best || Number(row.orders) > Number(best.orders) ? row : best,
+    null,
+  );
+  const onTimeReview = data.deliveryReviews.find((row) => row.label === "On time");
+  const lateReview = data.deliveryReviews.find((row) => row.label === "Late");
+  const forecastEnd = data.forecast.values?.slice(-1)[0];
+  const selectedForecastScore = data.forecast.backtest?.find(
+    (score) => score.model === data.forecast.model,
+  );
 
   return (
     <div className="workspace">
@@ -662,6 +699,14 @@ export default function Dashboard({ onBackToPortal }) {
           />
           <SalesChart rows={data.monthlySales} />
           <p className="chart-footnote">Month-over-month growth compares each month with the immediately preceding month in the selected period.</p>
+          <ChartExplanation
+            question="When does sales activity peak, and how is it changing?"
+            inference={peakMonth
+              ? `${peakMonth.label} is the strongest month at ${currency(peakMonth.value)}. ${latestGrowth === undefined || latestGrowth === null
+                ? "There is not enough prior-month history to calculate recent growth."
+                : `The latest month changed ${Number(latestGrowth) >= 0 ? "up" : "down"} ${percent(Math.abs(Number(latestGrowth)))} from the month before.`}`
+              : "No monthly sales are available for this period."}
+          />
         </article>
         <article className="panel operations-panel" id="operations" aria-busy={loading}>
           <PanelHeading eyebrow="02 / OPERATIONS" title="Delivery reliability" detail="Speed and promise-keeping, together" />
@@ -674,6 +719,10 @@ export default function Dashboard({ onBackToPortal }) {
             <div><span>Median transit</span><strong>{Number(metrics.median_delivery_days).toFixed(1)} <small>days</small></strong></div>
           </div>
           <p className="analysis-note"><strong>Why both?</strong> Median is less affected by unusually delayed orders than the mean.</p>
+          <ChartExplanation
+            question="Are orders arriving quickly and on time?"
+            inference={`${percent(metrics.on_time_rate)} of eligible deliveries met the estimate. Mean transit was ${Number(metrics.average_delivery_days).toFixed(1)} days versus a ${Number(metrics.median_delivery_days).toFixed(1)}-day median; a higher mean can signal a long-delay tail.`}
+          />
         </article>
       </section>
 
@@ -713,11 +762,21 @@ export default function Dashboard({ onBackToPortal }) {
                     <p><strong>Uncertainty, made visible.</strong> Shaded range uses the 90th percentile of rolling one-step absolute errors; it is an empirical reference, not a formal prediction interval.</p>
                   </div>
                 </div>
+                <ChartExplanation
+                  question="What does the historical pattern suggest for the next few months?"
+                  inference={forecastEnd
+                    ? `The ${data.forecast.model_label} forecast ends at ${currency(forecastEnd.value)} after ${data.forecast.horizon_months} months. Its rolling backtest WAPE is ${selectedForecastScore?.wape == null ? "unavailable" : percent(selectedForecastScore.wape)}; use the projection as a planning reference, not a guarantee.`
+                    : "A forecast could not be calculated from the available history."}
+                />
               </>
             ) : (
               <>
                 <PanelHeading eyebrow="03 / TIME-SERIES LAB" title="Monthly sales forecast" detail="Forecast uses chronological history, not a single-year slice." />
                 <p className="forecast-unavailable">{data.forecast.reason}</p>
+                <ChartExplanation
+                  question="Can the available history support a forecast?"
+                  inference={data.forecast.reason}
+                />
               </>
             )}
           </article>
@@ -728,6 +787,12 @@ export default function Dashboard({ onBackToPortal }) {
         <article className="panel panel-wide" aria-busy={loading}>
           <PanelHeading eyebrow="04 / ASSORTMENT" title="Category performance" detail="Sales contribution, reach, and average item value" action={<span className="panel-unit">TOP 8 BY SALES</span>} />
           <CategoryTable rows={data.categories} />
+          <ChartExplanation
+            question="Which product categories contribute most to revenue?"
+            inference={topCategory
+              ? `${topCategory.label} leads with ${currency(topCategory.sales)} (${percent(topCategory.sales_share)} of sales) across ${number(topCategory.orders)} orders.`
+              : "No category sales are available for this period."}
+          />
         </article>
         <article className="panel status-panel" aria-busy={loading}>
           <PanelHeading eyebrow="05 / ORDER FULFILLMENT" title="Order status mix" detail="Share of all orders in the selected period" />
@@ -737,18 +802,36 @@ export default function Dashboard({ onBackToPortal }) {
             <strong>{percent(metrics.cancellation_rate)}</strong>
             <span>Orders marked canceled</span>
           </div>
+          <ChartExplanation
+            question="What is the most common order outcome, and how often are orders canceled?"
+            inference={topStatus
+              ? `${topStatus.label.replaceAll("_", " ")} is the most common status (${number(topStatus.value)} orders). ${percent(metrics.cancellation_rate)} of orders were canceled.`
+              : "No order-status data is available for this period."}
+          />
         </article>
       </section>
 
       <section className="panel rating-panel" id="customer-insights" aria-busy={loading}>
         <PanelHeading eyebrow="06 / CUSTOMER VOICE" title="Review score distribution" detail="Ratings reveal the shape of satisfaction—not just its average" action={<span className="panel-unit">{number(data.ratings.reduce((sum, row) => sum + Number(row.value), 0))} REVIEWS</span>} />
         <RatingChart rows={data.ratings} />
+        <ChartExplanation
+          question="How much of the review distribution is low-scoring?"
+          inference={reviewCount
+            ? `${percent((lowReviewCount / reviewCount) * 100)} of reviews are 1–2 stars; the overall average is ${Number(metrics.average_review).toFixed(2)} out of 5.`
+            : "No review scores are available for this period."}
+        />
       </section>
 
       <section className="chart-grid research-grid">
         <article className="panel" aria-busy={loading}>
           <PanelHeading eyebrow="07 / PAYMENT BEHAVIOR" title="How customers pay" detail="Payment value, order reach, and typical installments" />
           <PaymentMix rows={data.payments} />
+          <ChartExplanation
+            question="Which payment method accounts for the most sales?"
+            inference={topPayment
+              ? `${topPayment.label.replaceAll("_", " ")} leads with ${currency(topPayment.value)} (${percent(topPayment.share)} of payment value).`
+              : "No payment data is available for this period."}
+          />
         </article>
       </section>
 
@@ -758,10 +841,22 @@ export default function Dashboard({ onBackToPortal }) {
         <article className="panel">
           <PanelHeading eyebrow="09 / DELIVERY & SENTIMENT" title="Does delivery timing align with reviews?" detail="Compare score patterns for delivered orders" />
           <DeliveryReviewComparison rows={data.deliveryReviews} />
+          <ChartExplanation
+            question="Do on-time and late deliveries have different review scores?"
+            inference={onTimeReview && lateReview
+              ? `On-time orders average ${Math.abs(Number(onTimeReview.average_score) - Number(lateReview.average_score)).toFixed(2)} points ${Number(onTimeReview.average_score) >= Number(lateReview.average_score) ? "higher" : "lower"} than late orders. This is an observed association, not proof of cause.`
+              : "There are not enough reviewed deliveries in both timing groups to compare scores."}
+          />
         </article>
         <article className="panel" id="demand-patterns" aria-busy={loading}>
           <PanelHeading eyebrow="10 / TEMPORAL BEHAVIOR" title="When orders are placed" detail="Order volume by weekday and hour · dataset purchase hour" />
           <DemandHeatmap rows={data.demandHeatmap} />
+          <ChartExplanation
+            question="When during the week are the most orders placed?"
+            inference={demandPeak
+              ? `${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][Number(demandPeak.weekday)]} at ${String(demandPeak.hour).padStart(2, "0")}:00 is the busiest observed time block with ${number(demandPeak.orders)} orders.`
+              : "No weekday or hour pattern is available for this period."}
+          />
         </article>
       </section>
 

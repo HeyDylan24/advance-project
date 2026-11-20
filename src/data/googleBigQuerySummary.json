@@ -1,0 +1,601 @@
+{
+  "source": "Google BigQuery TheLook eCommerce export",
+  "privacy_note": "Aggregated snapshot only; no customer-level identifiers or contact details are included.",
+  "date_range": {
+    "first_order": "2019-01-06",
+    "last_order": "2024-01-17"
+  },
+  "metrics": {
+    "orders": 125226,
+    "items": 181759,
+    "customers": 80044,
+    "sales": 10827118.91,
+    "average_order_value": 86.46,
+    "return_rate": 10.01,
+    "average_delivery_days": 4.01,
+    "gross_margin": 51.9,
+    "events": 2431963
+  },
+  "monthly": [
+    {
+      "label": "2019-01",
+      "sales": 2125.08,
+      "orders": 22,
+      "average_delivery_days": 3.94
+    },
+    {
+      "label": "2019-02",
+      "sales": 4125.01,
+      "orders": 38,
+      "average_delivery_days": 4.34
+    },
+    {
+      "label": "2019-03",
+      "sales": 7954.16,
+      "orders": 84,
+      "average_delivery_days": 4.04
+    },
+    {
+      "label": "2019-04",
+      "sales": 10614.86,
+      "orders": 104,
+      "average_delivery_days": 4.31
+    },
+    {
+      "label": "2019-05",
+      "sales": 14883.06,
+      "orders": 167,
+      "average_delivery_days": 3.76
+    },
+    {
+      "label": "2019-06",
+      "sales": 16586.15,
+      "orders": 194,
+      "average_delivery_days": 3.97
+    },
+    {
+      "label": "2019-07",
+      "sales": 18726.74,
+      "orders": 222,
+      "average_delivery_days": 3.63
+    },
+    {
+      "label": "2019-08",
+      "sales": 22191.42,
+      "orders": 238,
+      "average_delivery_days": 4.14
+    },
+    {
+      "label": "2019-09",
+      "sales": 28716.54,
+      "orders": 321,
+      "average_delivery_days": 3.94
+    },
+    {
+      "label": "2019-10",
+      "sales": 29116.6,
+      "orders": 337,
+      "average_delivery_days": 4.11
+    },
+    {
+      "label": "2019-11",
+      "sales": 28630.93,
+      "orders": 347,
+      "average_delivery_days": 4.15
+    },
+    {
+      "label": "2019-12",
+      "sales": 39152.16,
+      "orders": 464,
+      "average_delivery_days": 4.18
+    },
+    {
+      "label": "2020-01",
+      "sales": 41868.0,
+      "orders": 460,
+      "average_delivery_days": 4.1
+    },
+    {
+      "label": "2020-02",
+      "sales": 44419.95,
+      "orders": 492,
+      "average_delivery_days": 4.23
+    },
+    {
+      "label": "2020-03",
+      "sales": 45947.99,
+      "orders": 529,
+      "average_delivery_days": 4.04
+    },
+    {
+      "label": "2020-04",
+      "sales": 49943.98,
+      "orders": 586,
+      "average_delivery_days": 3.8
+    },
+    {
+      "label": "2020-05",
+      "sales": 58912.72,
+      "orders": 643,
+      "average_delivery_days": 4.2
+    },
+    {
+      "label": "2020-06",
+      "sales": 61279.74,
+      "orders": 718,
+      "average_delivery_days": 3.98
+    },
+    {
+      "label": "2020-07",
+      "sales": 65467.98,
+      "orders": 779,
+      "average_delivery_days": 3.94
+    },
+    {
+      "label": "2020-08",
+      "sales": 64999.56,
+      "orders": 736,
+      "average_delivery_days": 3.93
+    },
+    {
+      "label": "2020-09",
+      "sales": 68056.84,
+      "orders": 818,
+      "average_delivery_days": 3.99
+    },
+    {
+      "label": "2020-10",
+      "sales": 77034.52,
+      "orders": 907,
+      "average_delivery_days": 4.06
+    },
+    {
+      "label": "2020-11",
+      "sales": 78145.11,
+      "orders": 931,
+      "average_delivery_days": 4.09
+    },
+    {
+      "label": "2020-12",
+      "sales": 93759.1,
+      "orders": 1043,
+      "average_delivery_days": 4.09
+    },
+    {
+      "label": "2021-01",
+      "sales": 105493.93,
+      "orders": 1180,
+      "average_delivery_days": 4.07
+    },
+    {
+      "label": "2021-02",
+      "sales": 85518.18,
+      "orders": 989,
+      "average_delivery_days": 3.91
+    },
+    {
+      "label": "2021-03",
+      "sales": 100752.07,
+      "orders": 1164,
+      "average_delivery_days": 3.9
+    },
+    {
+      "label": "2021-04",
+      "sales": 102438.89,
+      "orders": 1213,
+      "average_delivery_days": 3.9
+    },
+    {
+      "label": "2021-05",
+      "sales": 112411.48,
+      "orders": 1315,
+      "average_delivery_days": 4.05
+    },
+    {
+      "label": "2021-06",
+      "sales": 113823.08,
+      "orders": 1323,
+      "average_delivery_days": 4.05
+    },
+    {
+      "label": "2021-07",
+      "sales": 118302.26,
+      "orders": 1389,
+      "average_delivery_days": 4.13
+    },
+    {
+      "label": "2021-08",
+      "sales": 132347.19,
+      "orders": 1533,
+      "average_delivery_days": 3.89
+    },
+    {
+      "label": "2021-09",
+      "sales": 136185.38,
+      "orders": 1500,
+      "average_delivery_days": 4.01
+    },
+    {
+      "label": "2021-10",
+      "sales": 144929.46,
+      "orders": 1647,
+      "average_delivery_days": 4.01
+    },
+    {
+      "label": "2021-11",
+      "sales": 145796.76,
+      "orders": 1677,
+      "average_delivery_days": 4.0
+    },
+    {
+      "label": "2021-12",
+      "sales": 152074.09,
+      "orders": 1774,
+      "average_delivery_days": 3.96
+    },
+    {
+      "label": "2022-01",
+      "sales": 162029.34,
+      "orders": 1884,
+      "average_delivery_days": 4.04
+    },
+    {
+      "label": "2022-02",
+      "sales": 146715.05,
+      "orders": 1687,
+      "average_delivery_days": 3.97
+    },
+    {
+      "label": "2022-03",
+      "sales": 171818.6,
+      "orders": 2093,
+      "average_delivery_days": 3.89
+    },
+    {
+      "label": "2022-04",
+      "sales": 178993.52,
+      "orders": 2058,
+      "average_delivery_days": 4.06
+    },
+    {
+      "label": "2022-05",
+      "sales": 195398.74,
+      "orders": 2279,
+      "average_delivery_days": 3.98
+    },
+    {
+      "label": "2022-06",
+      "sales": 195660.24,
+      "orders": 2299,
+      "average_delivery_days": 4.04
+    },
+    {
+      "label": "2022-07",
+      "sales": 218225.66,
+      "orders": 2545,
+      "average_delivery_days": 3.84
+    },
+    {
+      "label": "2022-08",
+      "sales": 219085.97,
+      "orders": 2704,
+      "average_delivery_days": 3.93
+    },
+    {
+      "label": "2022-09",
+      "sales": 218983.77,
+      "orders": 2585,
+      "average_delivery_days": 3.98
+    },
+    {
+      "label": "2022-10",
+      "sales": 256486.6,
+      "orders": 2931,
+      "average_delivery_days": 3.97
+    },
+    {
+      "label": "2022-11",
+      "sales": 255991.02,
+      "orders": 2987,
+      "average_delivery_days": 4.02
+    },
+    {
+      "label": "2022-12",
+      "sales": 266333.82,
+      "orders": 3119,
+      "average_delivery_days": 4.03
+    },
+    {
+      "label": "2023-01",
+      "sales": 286592.88,
+      "orders": 3378,
+      "average_delivery_days": 4.05
+    },
+    {
+      "label": "2023-02",
+      "sales": 275781.33,
+      "orders": 3167,
+      "average_delivery_days": 4.03
+    },
+    {
+      "label": "2023-03",
+      "sales": 324897.22,
+      "orders": 3744,
+      "average_delivery_days": 4.03
+    },
+    {
+      "label": "2023-04",
+      "sales": 314943.29,
+      "orders": 3786,
+      "average_delivery_days": 3.99
+    },
+    {
+      "label": "2023-05",
+      "sales": 347730.12,
+      "orders": 4093,
+      "average_delivery_days": 3.95
+    },
+    {
+      "label": "2023-06",
+      "sales": 359935.08,
+      "orders": 4312,
+      "average_delivery_days": 4.06
+    },
+    {
+      "label": "2023-07",
+      "sales": 421546.08,
+      "orders": 4731,
+      "average_delivery_days": 4.03
+    },
+    {
+      "label": "2023-08",
+      "sales": 448149.33,
+      "orders": 5031,
+      "average_delivery_days": 4.06
+    },
+    {
+      "label": "2023-09",
+      "sales": 481816.5,
+      "orders": 5429,
+      "average_delivery_days": 4.06
+    },
+    {
+      "label": "2023-10",
+      "sales": 544667.37,
+      "orders": 6108,
+      "average_delivery_days": 3.99
+    },
+    {
+      "label": "2023-11",
+      "sales": 588526.2,
+      "orders": 6915,
+      "average_delivery_days": 4.01
+    },
+    {
+      "label": "2023-12",
+      "sales": 726339.01,
+      "orders": 8347,
+      "average_delivery_days": 4.01
+    },
+    {
+      "label": "2024-01",
+      "sales": 797741.19,
+      "orders": 9130,
+      "average_delivery_days": 4.04
+    }
+  ],
+  "categories": [
+    {
+      "label": "Outerwear & Coats",
+      "sales": 1301570.72,
+      "share": 12.02,
+      "items": 8968,
+      "orders": 8757,
+      "gross_margin": 55.46
+    },
+    {
+      "label": "Jeans",
+      "sales": 1253644.21,
+      "share": 11.58,
+      "items": 12698,
+      "orders": 12274,
+      "gross_margin": 46.5
+    },
+    {
+      "label": "Sweaters",
+      "sales": 842651.47,
+      "share": 7.78,
+      "items": 11265,
+      "orders": 10928,
+      "gross_margin": 51.89
+    },
+    {
+      "label": "Suits & Sport Coats",
+      "sales": 666767.31,
+      "share": 6.16,
+      "items": 5223,
+      "orders": 5068,
+      "gross_margin": 59.83
+    },
+    {
+      "label": "Fashion Hoodies & Sweatshirts",
+      "sales": 649352.82,
+      "share": 6.0,
+      "items": 11885,
+      "orders": 11542,
+      "gross_margin": 48.09
+    },
+    {
+      "label": "Swim",
+      "sales": 646738.72,
+      "share": 5.97,
+      "items": 11428,
+      "orders": 11091,
+      "gross_margin": 48.95
+    },
+    {
+      "label": "Sleep & Lounge",
+      "sales": 537392.1,
+      "share": 4.96,
+      "items": 11002,
+      "orders": 10689,
+      "gross_margin": 51.55
+    },
+    {
+      "label": "Shorts",
+      "sales": 512069.48,
+      "share": 4.73,
+      "items": 11038,
+      "orders": 10696,
+      "gross_margin": 49.94
+    },
+    {
+      "label": "Tops & Tees",
+      "sales": 491551.39,
+      "share": 4.54,
+      "items": 11925,
+      "orders": 11577,
+      "gross_margin": 44.02
+    },
+    {
+      "label": "Dresses",
+      "sales": 464416.84,
+      "share": 4.29,
+      "items": 5456,
+      "orders": 5319,
+      "gross_margin": 54.89
+    }
+  ],
+  "statuses": [
+    {
+      "label": "Shipped",
+      "value": 37577
+    },
+    {
+      "label": "Complete",
+      "value": 31354
+    },
+    {
+      "label": "Processing",
+      "value": 25156
+    },
+    {
+      "label": "Cancelled",
+      "value": 18609
+    },
+    {
+      "label": "Returned",
+      "value": 12530
+    }
+  ],
+  "regions": [
+    {
+      "label": "Guangdong",
+      "sales": 588729.77,
+      "orders": 6665,
+      "share": 5.44
+    },
+    {
+      "label": "England",
+      "sales": 449450.98,
+      "orders": 5059,
+      "share": 4.15
+    },
+    {
+      "label": "California",
+      "sales": 394960.6,
+      "orders": 4619,
+      "share": 3.65
+    },
+    {
+      "label": "Shanghai",
+      "sales": 272157.71,
+      "orders": 3175,
+      "share": 2.51
+    },
+    {
+      "label": "Texas",
+      "sales": 260547.84,
+      "orders": 3015,
+      "share": 2.41
+    },
+    {
+      "label": "Beijing",
+      "sales": 241506.11,
+      "orders": 2697,
+      "share": 2.23
+    },
+    {
+      "label": "Zhejiang",
+      "sales": 240876.62,
+      "orders": 2699,
+      "share": 2.22
+    },
+    {
+      "label": "São Paulo",
+      "sales": 228272.62,
+      "orders": 2667,
+      "share": 2.11
+    },
+    {
+      "label": "Hebei",
+      "sales": 226341.77,
+      "orders": 2646,
+      "share": 2.09
+    },
+    {
+      "label": "Jiangsu",
+      "sales": 205799.68,
+      "orders": 2381,
+      "share": 1.9
+    }
+  ],
+  "event_types": [
+    {
+      "label": "product",
+      "value": 845607
+    },
+    {
+      "label": "cart",
+      "value": 595994
+    },
+    {
+      "label": "department",
+      "value": 595323
+    },
+    {
+      "label": "purchase",
+      "value": 181759
+    },
+    {
+      "label": "cancel",
+      "value": 125568
+    },
+    {
+      "label": "home",
+      "value": 87712
+    }
+  ],
+  "traffic_sources": [
+    {
+      "label": "Email",
+      "value": 1091988
+    },
+    {
+      "label": "Adwords",
+      "value": 731144
+    },
+    {
+      "label": "Facebook",
+      "value": 243834
+    },
+    {
+      "label": "YouTube",
+      "value": 242938
+    },
+    {
+      "label": "Organic",
+      "value": 122059
+    }
+  ]
+}

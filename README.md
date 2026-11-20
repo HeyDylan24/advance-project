@@ -12,6 +12,7 @@ A React dashboard served by a FastAPI application for the Olist Brazilian E-Comm
 - Forecast six months of sales with a naïve/seasonal-naïve model selected by rolling one-step backtesting.
 - Explore payment methods, the customer-state sales footprint, hourly/weekday order patterns, and review outcomes by delivery timing.
 - Compare all 27 Brazilian federative units in an interactive sales choropleth with neon state borders, order-volume bubbles, state-level average order value, review and delivery benchmarks against Brazil-wide averages, and top-five revenue concentration.
+- Explore the Google BigQuery TheLook eCommerce export in a separate analyst tab with revenue, category, event, fulfillment, and regional summaries. Each chart includes a question and a collapsible inference.
 
 Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
 
@@ -20,6 +21,16 @@ The time-series view compares a last-observation naïve baseline with a seasonal
 The importer also enriches an existing Neon database with payment records and customer-state dimensions. It tracks this enrichment separately from the original orders/items/reviews import, so the existing core dataset is preserved and the added CSVs are imported once. The delivery/review comparison is descriptive and should not be interpreted as a causal estimate.
 
 The Brazil map shades states by product sales and uses circles sized by order volume at representative state positions; it does not plot individual customer locations. Simplified state boundaries are adapted from [Click That 'Hood's Brazil states GeoJSON](https://github.com/codeforgermany/click_that_hood/blob/main/public/data/brazil-states.geojson); the source repository's MIT license is included in [`src/data/LICENSE`](./src/data/LICENSE).
+
+## Google BigQuery analysis snapshot
+
+The analyst workspace's Google BigQuery tab is a static aggregate snapshot of the TheLook eCommerce export, not a live BigQuery connection. To refresh it from the supplied archive, run:
+
+```sh
+python build_bigquery_snapshot.py "archive (1).zip"
+```
+
+The builder writes only aggregate metrics to `src/data/googleBigQuerySummary.json`; it does not include customer IDs, contact details, or event-level records. Keep the source archive out of version control.
 
 ## Run locally
 
