@@ -613,6 +613,7 @@ export default function Dashboard({ onBackToPortal }) {
         <div className="topbar-breadcrumb"><span>WORKSPACE</span><i>/</i><strong>Commerce overview</strong></div>
         <div className="topbar-actions">
           {onBackToPortal && <button className="portal-back" type="button" onClick={onBackToPortal}>← Analyst inbox</button>}
+          <a className="portal-back" href="#workspace">Client / analyst sign-in</a>
           <span className="data-status"><i /> DATA CONNECTED</span>
           <span className="topbar-dataset">OLIST PUBLIC DATASET</span>
         </div>

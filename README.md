@@ -54,7 +54,7 @@ The first import can take several minutes. It runs in a database transaction and
 
 ## Client and analyst workspaces
 
-The app also supports Clerk-authenticated client and analyst accounts. Clients can submit an analysis request and attach up to 10 CSV or ZIP files (500 MB each). Analysts can view requests and accept or decline them. Accepting a request does not execute analysis: the analyst writes the analysis in their IDE and deploys a code-defined dashboard tab.
+The Olist dashboard remains publicly viewable at `/`; its header links to the optional Clerk sign-in for the client and analyst workspace. New sign-ups and accounts without an assigned role are treated as clients, so clients can create accounts and submit requests. Analyst access is restricted to accounts explicitly assigned the `analyst` role in Clerk. Clients can attach up to 10 CSV or ZIP files (500 MB each). Analysts can view requests and accept or decline them. Accepting a request does not execute analysis: the analyst writes the analysis in their IDE and deploys a code-defined dashboard tab.
 
 Neon stores both request metadata and file contents. Files are split into 8 MB chunks and stored as PostgreSQL `BYTEA` rows; downloads are streamed back in chunks. This avoids loading a full 500 MB file into application memory. ZIP files are not extracted by the app. Large uploads consume Neon database storage and transfer, so monitor the database's storage limits and usage.
 
@@ -65,7 +65,7 @@ Configure these environment variables for both local/deployed environments as ap
 
 For Vite, the publishable key must use the `VITE_CLERK_PUBLISHABLE_KEY` name; a `NEXT_PUBLIC_` prefix is not read. No Clerk secret key is used by this app. For local development, put the publishable key in the ignored `.env.local` file and set the backend Clerk variables in the FastAPI process environment.
 
-In Clerk, set each user's **public metadata** `role` to `client` or `analyst`, and add a session-token custom claim mapping public metadata into a signed `metadata` claim (for example, `{"metadata":"{{user.public_metadata}}"}`). Set the frontend's Clerk sign-in allowed origins to include the deployed domain and local development origin. Never commit Clerk or storage secret keys.
+In Clerk, set the analyst's **public metadata** `role` to `analyst`, and add a session-token custom claim mapping public metadata into a signed `metadata` claim (for example, `{"metadata":"{{user.public_metadata}}"}`). No metadata change is needed for clients. Set the frontend's Clerk sign-in allowed origins to include the deployed domain and local development origin. Never commit Clerk or storage secret keys.
 
 The workspace tables are created by the FastAPI app on startup. For Render, add the Clerk variables to the service before enabling client accounts. New analyst tabs are registered in `src/analysisTabs.js`. Client-facing tabs must include the target Clerk `clientUserId` so other clients cannot see them, for example:
 

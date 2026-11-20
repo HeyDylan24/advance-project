@@ -7,6 +7,7 @@ import {
   useUser,
 } from "@clerk/react";
 import { analystAnalysisTabs, clientAnalysisTabs } from "./analysisTabs.js";
+import Dashboard from "./pages/Dashboard.jsx";
 import "./portal.css";
 
 const MAX_FILE_BYTES = 500 * 1024 * 1024;
@@ -29,7 +30,7 @@ function SignInGate() {
       <div>
         <p className="portal-kicker">OLIST / ANALYTICS WORKSPACE</p>
         <h1>Sign in to your workspace</h1>
-        <p>Clients can submit analysis requests. Analysts can review and accept work.</p>
+        <p>Create a client account to submit requests. Analyst accounts are assigned by the workspace administrator.</p>
       </div>
       <SignIn />
     </main>
@@ -271,7 +272,7 @@ function RequestList({ requests, role, apiRequest, onChanged, loading }) {
 function Workspace() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
-  const role = user?.publicMetadata?.role;
+  const role = user ? (user.publicMetadata?.role ?? "client") : undefined;
   const [activeTab, setActiveTab] = useState("");
   const [requests, setRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
@@ -406,6 +407,19 @@ function Workspace() {
 }
 
 export default function App() {
+  const [showWorkspace, setShowWorkspace] = useState(
+    () => window.location.hash === "#workspace",
+  );
+  useEffect(() => {
+    const updateWorkspaceRoute = () => {
+      setShowWorkspace(window.location.hash === "#workspace");
+    };
+    window.addEventListener("hashchange", updateWorkspaceRoute);
+    return () => window.removeEventListener("hashchange", updateWorkspaceRoute);
+  }, []);
+
+  if (!showWorkspace) return <Dashboard />;
+
   const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   if (!publishableKey) {
     return (

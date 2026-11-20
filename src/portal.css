@@ -18,7 +18,7 @@
 .portal-tab:hover { color: #e2e4ed; }
 .portal-tab-active { border-bottom-color: #9d89ff; color: #d2caff; }
 .portal-tab-count { display: grid; min-width: 17px; height: 17px; place-items: center; border-radius: 10px; background: #3a2f5e; color: #d6c9ff; font: 7px "DM Mono", monospace; }
-.portal-back { padding: 6px 8px; border: 1px solid #39334e; border-radius: 5px; background: #191827; color: #c6baff; font: 8px "DM Mono", monospace; cursor: pointer; }
+.portal-back { padding: 6px 8px; border: 1px solid #39334e; border-radius: 5px; background: #191827; color: #c6baff; font: 8px "DM Mono", monospace; cursor: pointer; text-decoration: none; }
 .portal-back:hover { border-color: #7566bf; color: #fff; }
 .portal-card, .request-card { border: 1px solid #292f3b; border-radius: 9px; background: linear-gradient(145deg, rgba(22, 27, 36, .98), rgba(17, 22, 30, .98)); box-shadow: 0 8px 26px rgba(0, 0, 0, .14); }
 .request-compose { max-width: 800px; padding: 20px; }

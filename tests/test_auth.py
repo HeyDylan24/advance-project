@@ -32,17 +32,15 @@ class ClerkAuthTests(unittest.TestCase):
 
     def token(self, role="client", key=None):
         now = int(time.time())
-        return jwt.encode(
-            {
-                "iss": "https://clerk.example.test",
-                "sub": "user_test",
-                "iat": now,
-                "exp": now + 60,
-                "metadata": {"role": role},
-            },
-            key or self.private_key,
-            algorithm="RS256",
-        )
+        claims = {
+            "iss": "https://clerk.example.test",
+            "sub": "user_test",
+            "iat": now,
+            "exp": now + 60,
+        }
+        if role is not None:
+            claims["metadata"] = {"role": role}
+        return jwt.encode(claims, key or self.private_key, algorithm="RS256")
 
     def authenticate(self, token):
         with (
@@ -63,7 +61,13 @@ class ClerkAuthTests(unittest.TestCase):
             {"user_id": "user_test", "role": "client"},
         )
 
-    def test_rejects_unassigned_role(self):
+    def test_defaults_missing_role_to_client(self):
+        self.assertEqual(
+            self.authenticate(self.token(role=None)),
+            {"user_id": "user_test", "role": "client"},
+        )
+
+    def test_rejects_invalid_role(self):
         with self.assertRaises(HTTPException) as raised:
             self.authenticate(self.token(role="admin"))
         self.assertEqual(raised.exception.status_code, 403)

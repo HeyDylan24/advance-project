@@ -59,6 +59,8 @@ def current_actor(
 
     metadata = claims.get("metadata")
     role = metadata.get("role") if isinstance(metadata, dict) else None
+    if role is None:
+        role = "client"
     user_id = claims.get("sub")
     if role not in ("client", "analyst") or not isinstance(user_id, str):
         raise HTTPException(
