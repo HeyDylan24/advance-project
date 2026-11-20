@@ -12,7 +12,7 @@ A React dashboard served by a FastAPI application for the Olist Brazilian E-Comm
 - Forecast six months of sales with a naïve/seasonal-naïve model selected by rolling one-step backtesting.
 - Explore payment methods, the customer-state sales footprint, hourly/weekday order patterns, and review outcomes by delivery timing.
 - Compare all 27 Brazilian federative units in an interactive sales choropleth with neon state borders, order-volume bubbles, state-level average order value, review and delivery benchmarks against Brazil-wide averages, and top-five revenue concentration.
-- Explore the Google BigQuery TheLook eCommerce export in a separate analyst tab with revenue, category, event, fulfillment, and regional summaries. Each chart includes a question and a collapsible inference.
+- Explore the Google BigQuery TheLook eCommerce export in a separate analyst tab with revenue, department, event, fulfillment, and regional summaries, including a world bubble map of country sales. Each chart includes a question and a collapsible inference.
 
 Gross merchandise value is the sum of item prices and excludes freight. Average order value is the mean of item totals grouped by order. Delivery-time statistics include orders with both purchase and customer-delivery timestamps; comparing mean and median helps identify skew from long-delayed orders. Year filters use purchase year. These descriptive metrics show association and distribution, not causal effects.
 
@@ -30,7 +30,7 @@ The analyst workspace's Google BigQuery tab is a static aggregate snapshot of th
 python build_bigquery_snapshot.py "archive (1).zip"
 ```
 
-The builder writes only aggregate metrics to `src/data/googleBigQuerySummary.json`; it does not include customer IDs, contact details, or event-level records. Keep the source archive out of version control.
+The builder writes only aggregate metrics to `src/data/googleBigQuerySummary.json`; it does not include customer IDs, contact details, or event-level records. Country map markers use approximate country centers rather than customer coordinates. Keep the source archive out of version control.
 
 ## Run locally
 

@@ -550,6 +550,134 @@
       "share": 1.9
     }
   ],
+  "countries": [
+    {
+      "label": "China",
+      "sales": 3740707.53,
+      "orders": 42986,
+      "share": 34.55,
+      "map_latitude": 35.0,
+      "map_longitude": 103.0
+    },
+    {
+      "label": "United States",
+      "sales": 2413996.13,
+      "orders": 28099,
+      "share": 22.3,
+      "map_latitude": 39.0,
+      "map_longitude": -98.0
+    },
+    {
+      "label": "Brazil",
+      "sales": 1554889.71,
+      "orders": 18262,
+      "share": 14.36,
+      "map_latitude": -10.0,
+      "map_longitude": -53.0
+    },
+    {
+      "label": "South Korea",
+      "sales": 579559.02,
+      "orders": 6620,
+      "share": 5.35,
+      "map_latitude": 36.0,
+      "map_longitude": 128.0
+    },
+    {
+      "label": "France",
+      "sales": 506544.59,
+      "orders": 5968,
+      "share": 4.68,
+      "map_latitude": 46.0,
+      "map_longitude": 2.0
+    },
+    {
+      "label": "United Kingdom",
+      "sales": 505591.66,
+      "orders": 5673,
+      "share": 4.67,
+      "map_latitude": 55.0,
+      "map_longitude": -3.0
+    },
+    {
+      "label": "Germany",
+      "sales": 451986.99,
+      "orders": 5287,
+      "share": 4.17,
+      "map_latitude": 51.0,
+      "map_longitude": 10.0
+    },
+    {
+      "label": "Spain",
+      "sales": 438834.13,
+      "orders": 4969,
+      "share": 4.05,
+      "map_latitude": 40.0,
+      "map_longitude": -4.0
+    },
+    {
+      "label": "Japan",
+      "sales": 260449.27,
+      "orders": 2945,
+      "share": 2.41,
+      "map_latitude": 37.0,
+      "map_longitude": 138.0
+    },
+    {
+      "label": "Australia",
+      "sales": 219604.2,
+      "orders": 2630,
+      "share": 2.03,
+      "map_latitude": -25.0,
+      "map_longitude": 133.0
+    },
+    {
+      "label": "Belgium",
+      "sales": 125341.35,
+      "orders": 1441,
+      "share": 1.16,
+      "map_latitude": 50.5,
+      "map_longitude": 4.5
+    },
+    {
+      "label": "Poland",
+      "sales": 28341.59,
+      "orders": 325,
+      "share": 0.26,
+      "map_latitude": 52.0,
+      "map_longitude": 20.0
+    },
+    {
+      "label": "Colombia",
+      "sales": 1188.24,
+      "orders": 19,
+      "share": 0.01,
+      "map_latitude": 4.0,
+      "map_longitude": -73.0
+    },
+    {
+      "label": "Austria",
+      "sales": 84.49,
+      "orders": 2,
+      "share": 0.0,
+      "map_latitude": 47.5,
+      "map_longitude": 14.5
+    }
+  ],
+  "departments": [
+    {
+      "label": "Men",
+      "sales": 5735434.21,
+      "share": 52.97,
+      "items": 90750
+    },
+    {
+      "label": "Women",
+      "sales": 5091684.7,
+      "share": 47.03,
+      "items": 91009
+    }
+  ],
   "event_types": [
     {
       "label": "product",

@@ -1,7 +1,7 @@
 import summary from "../data/googleBigQuerySummary.json";
 import ChartExplanation from "../ChartExplanation.jsx";
 
-const palette = ["#9b8cff", "#5ed6b0", "#f1bd76", "#f18eae", "#72b7dc", "#c79af5", "#9acb73", "#e08d65"];
+const palette = ["#ff5fd2", "#5de4ff", "#c06bff", "#ffd166", "#6bffca", "#ff7a91", "#74a7ff", "#ff9b53"];
 const number = (value) => new Intl.NumberFormat("en-US").format(Number(value || 0));
 const percent = (value) => `${Number(value || 0).toFixed(1)}%`;
 const currency = (value) =>
@@ -17,6 +17,27 @@ const compactCurrency = (value) =>
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(Number(value || 0));
+
+const continents = [
+  [[-168, 70], [-150, 72], [-132, 60], [-124, 50], [-118, 33], [-105, 23], [-98, 17], [-82, 9], [-77, 25], [-80, 34], [-66, 45], [-53, 49], [-62, 60], [-82, 70], [-110, 75], [-140, 72]],
+  [[-53, 82], [-38, 80], [-23, 71], [-43, 59], [-54, 61], [-60, 72]],
+  [[-80, 10], [-70, 8], [-62, -3], [-65, -20], [-72, -39], [-68, -54], [-58, -51], [-49, -34], [-38, -10], [-47, 1], [-52, 8], [-66, 12]],
+  [[-11, 36], [-5, 44], [8, 48], [16, 58], [28, 69], [47, 72], [63, 66], [82, 72], [103, 70], [124, 60], [146, 57], [164, 61], [178, 51], [158, 43], [143, 43], [134, 34], [122, 24], [108, 19], [96, 8], [80, 7], [74, 15], [60, 24], [46, 31], [32, 35], [20, 39], [8, 36]],
+  [[-17, 35], [2, 38], [20, 34], [34, 29], [43, 12], [50, 10], [42, -12], [33, -35], [19, -34], [10, -20], [3, -2], [-10, 10], [-17, 21]],
+  [[112, -11], [130, -10], [153, -17], [153, -29], [144, -39], [129, -35], [115, -23]],
+];
+
+function scrollToSection(event) {
+  event.preventDefault();
+  document.getElementById(event.currentTarget.hash.slice(1))?.scrollIntoView({ block: "start" });
+}
+
+function projectWorldPoint(longitude, latitude) {
+  return {
+    x: 50 + ((Number(longitude) + 180) / 360) * 900,
+    y: 20 + ((90 - Number(latitude)) / 180) * 460,
+  };
+}
 
 function MetricCard({ label, value, caption, icon, tone }) {
   return (
@@ -122,6 +143,59 @@ function BarList({ rows, valueKey, total, formatValue, detail }) {
   );
 }
 
+function WorldMarketMap({ rows }) {
+  const maxSales = Math.max(...rows.map((row) => Number(row.sales)), 1);
+  const labeledCountries = new Set(rows.slice(0, 3).map((row) => row.label));
+  const outlinePath = (points) => points.map(([longitude, latitude], index) => {
+    const point = projectWorldPoint(longitude, latitude);
+    return `${index ? "L" : "M"}${point.x},${point.y}`;
+  }).join(" ") + " Z";
+
+  return (
+    <div className="world-map-wrap">
+      <svg className="world-map" viewBox="0 0 1000 500" role="img" aria-label="World bubble map of sales by country">
+        <defs>
+          <linearGradient id="world-land" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#ff61d1" stopOpacity=".23" />
+            <stop offset="100%" stopColor="#5de4ff" stopOpacity=".15" />
+          </linearGradient>
+          <radialGradient id="world-bubble">
+            <stop offset="0%" stopColor="#fff5ff" stopOpacity=".98" />
+            <stop offset="35%" stopColor="#ff65d5" stopOpacity=".92" />
+            <stop offset="100%" stopColor="#a34dff" stopOpacity=".76" />
+          </radialGradient>
+        </defs>
+        {[-120, -60, 0, 60, 120].map((longitude) => {
+          const x = projectWorldPoint(longitude, 0).x;
+          return <line className="world-grid-line" key={`lon-${longitude}`} x1={x} x2={x} y1="20" y2="480" />;
+        })}
+        {[-60, -30, 0, 30, 60].map((latitude) => {
+          const y = projectWorldPoint(0, latitude).y;
+          return <line className="world-grid-line" key={`lat-${latitude}`} x1="50" x2="950" y1={y} y2={y} />;
+        })}
+        {continents.map((points, index) => (
+          <path className="world-continent" d={outlinePath(points)} key={index} />
+        ))}
+        {rows.map((row) => {
+          const point = projectWorldPoint(row.map_longitude, row.map_latitude);
+          const radius = 4 + 17 * Math.sqrt(Number(row.sales) / maxSales);
+          return (
+            <g className="world-market-point" key={row.label} tabIndex="0">
+              <circle cx={point.x} cy={point.y} r={radius + 4} className="world-market-halo" />
+              <circle cx={point.x} cy={point.y} r={radius} className="world-market-bubble" />
+              <title>{row.label}: {currency(row.sales)} in sales, {number(row.orders)} orders, {percent(row.share)} share</title>
+              {labeledCountries.has(row.label) && (
+                <text className="world-market-label" x={point.x + 8} y={point.y - radius - 4}>{row.label}</text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div className="world-map-legend"><span><i />Sales by country</span><small>Bubble area represents item sales</small></div>
+    </div>
+  );
+}
+
 export default function GoogleBigQueryDashboard({ onBackToPortal }) {
   const { metrics } = summary;
   const peakMonth = summary.monthly.reduce(
@@ -148,10 +222,15 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
   );
   const topRegion = summary.regions[0];
   const topTrafficSource = summary.traffic_sources[0];
+  const topDepartment = summary.departments[0];
+  const topCountry = summary.countries[0];
+  const leadingCountryShare = summary.countries
+    .slice(0, 3)
+    .reduce((share, row) => share + Number(row.share), 0);
   const dateRange = `${summary.date_range.first_order} – ${summary.date_range.last_order}`;
 
   return (
-    <div className="workspace">
+    <div className="workspace bq-workspace">
       <aside className="sidebar">
         <a className="sidebar-brand" href="/" aria-label="Commerce dashboard home">
           <span className="brand-mark">O</span>
@@ -164,10 +243,11 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
         </div>
         <p className="sidebar-section-label">ANALYZE</p>
         <nav className="sidebar-nav" aria-label="BigQuery analysis sections">
-          <a className="nav-link nav-link-active" href="#bq-overview"><span className="nav-icon">▦</span>Overview</a>
-          <a className="nav-link" href="#bq-revenue"><span className="nav-icon">⌁</span>Revenue & delivery</a>
-          <a className="nav-link" href="#bq-categories"><span className="nav-icon">◈</span>Categories & events</a>
-          <a className="nav-link" href="#bq-operations"><span className="nav-icon">↗</span>Orders & regions</a>
+          <a className="nav-link nav-link-active" href="#bq-overview" onClick={scrollToSection}><span className="nav-icon">▦</span>Overview</a>
+          <a className="nav-link" href="#bq-revenue" onClick={scrollToSection}><span className="nav-icon">⌁</span>Revenue & delivery</a>
+          <a className="nav-link" href="#bq-categories" onClick={scrollToSection}><span className="nav-icon">◈</span>Categories & events</a>
+          <a className="nav-link" href="#bq-world" onClick={scrollToSection}><span className="nav-icon">◎</span>Global markets</a>
+          <a className="nav-link" href="#bq-operations" onClick={scrollToSection}><span className="nav-icon">↗</span>Orders & regions</a>
         </nav>
         <div className="sidebar-spacer" />
         <div className="dataset-status">
@@ -187,6 +267,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
             <div className="topbar-breadcrumb"><span>WORKSPACE</span><i>/</i><strong>Google BigQuery</strong></div>
             <div className="topbar-actions">
               {onBackToPortal && <button className="portal-back" type="button" onClick={onBackToPortal}>← Analyst inbox</button>}
+              <a className="portal-back" href="#workspace">Client / analyst sign-in</a>
               <span className="data-status"><i /> AGGREGATE SNAPSHOT</span>
               <span className="topbar-dataset">THELOOK ECOMMERCE</span>
             </div>
@@ -248,7 +329,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
             </article>
           </section>
 
-          <section className="chart-grid secondary-grid" id="bq-categories">
+          <section className="chart-grid bq-triple-grid" id="bq-categories">
             <article className="panel">
               <PanelHeading eyebrow="03 / ASSORTMENT" title="Category sales" detail="Top product categories by item sales" />
               <BarList rows={summary.categories} valueKey="sales" formatValue={currency} />
@@ -260,7 +341,17 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="04 / SHOPPING ACTIVITY" title="Event mix" detail="Recorded event rows by event type—not unique users" />
+              <PanelHeading eyebrow="04 / PRODUCT MIX" title="Department sales" detail="Sales split across product departments" />
+              <BarList rows={summary.departments} valueKey="sales" formatValue={currency} />
+              <ChartExplanation
+                question="Which department contributes more item sales?"
+                inference={topDepartment
+                  ? `${topDepartment.label} leads with ${currency(topDepartment.sales)}, or ${percent(topDepartment.share)} of item sales.`
+                  : "No department data is available in this snapshot."}
+              />
+            </article>
+            <article className="panel">
+              <PanelHeading eyebrow="05 / SHOPPING ACTIVITY" title="Event mix" detail="Recorded event rows by event type—not unique users" />
               <BarList rows={summary.event_types} valueKey="value" total={metrics.events} formatValue={number} />
               <ChartExplanation
                 question="Which event type appears most often in the event log?"
@@ -271,9 +362,31 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
             </article>
           </section>
 
+          <section className="panel bq-world-panel" id="bq-world">
+            <PanelHeading
+              eyebrow="06 / GLOBAL MARKETS"
+              title="Where commerce happens"
+              detail={`Country-level sales across ${summary.countries.length} markets · markers use approximate country centers`}
+              action={<span className="panel-unit">{summary.countries.length} COUNTRIES</span>}
+            />
+            <div className="world-market-layout">
+              <WorldMarketMap rows={summary.countries} />
+              <aside className="world-market-ranking">
+                <span className="bq-mini-label">LEADING MARKETS · ITEM SALES</span>
+                <BarList rows={summary.countries.slice(0, 8)} valueKey="sales" formatValue={currency} />
+              </aside>
+            </div>
+            <ChartExplanation
+              question="Which countries lead sales, and how concentrated are the top markets?"
+              inference={topCountry
+                ? `${topCountry.label} leads with ${currency(topCountry.sales)} (${percent(topCountry.share)}). The three largest markets contribute ${percent(leadingCountryShare)} of sales across the ${summary.countries.length} countries represented.`
+                : "No country-level sales are available in this snapshot."}
+            />
+          </section>
+
           <section className="chart-grid research-grid" id="bq-operations">
             <article className="panel">
-              <PanelHeading eyebrow="05 / ORDER FULFILLMENT" title="Order status mix" detail="Order counts grouped by recorded status" />
+              <PanelHeading eyebrow="07 / ORDER FULFILLMENT" title="Order status mix" detail="Order counts grouped by recorded status" />
               <BarList rows={summary.statuses} valueKey="value" total={metrics.orders} formatValue={number} />
               <ChartExplanation
                 question="What is the most common order outcome?"
@@ -283,7 +396,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="06 / CUSTOMER REGION" title="Sales by state" detail="Top states by item sales; location shown only in aggregate" />
+              <PanelHeading eyebrow="08 / CUSTOMER REGION" title="Sales by state" detail="Top states by item sales; location shown only in aggregate" />
               <BarList rows={summary.regions} valueKey="sales" formatValue={currency} />
               <ChartExplanation
                 question="Where are the largest state-level markets?"
@@ -296,7 +409,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
 
           <section className="chart-grid research-grid">
             <article className="panel">
-              <PanelHeading eyebrow="07 / DELIVERY TREND" title="Average delivery time by month" detail="Elapsed days from order creation to delivery" action={<span className="panel-unit">{Number(metrics.average_delivery_days).toFixed(1)} DAYS OVERALL</span>} />
+              <PanelHeading eyebrow="09 / DELIVERY TREND" title="Average delivery time by month" detail="Elapsed days from order creation to delivery" action={<span className="panel-unit">{Number(metrics.average_delivery_days).toFixed(1)} DAYS OVERALL</span>} />
               <TrendChart
                 rows={summary.monthly.filter((row) => row.average_delivery_days !== null)}
                 valueKey="average_delivery_days"
@@ -313,7 +426,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="08 / TRAFFIC SOURCES" title="Event traffic mix" detail="Recorded event rows grouped by traffic source" />
+              <PanelHeading eyebrow="10 / TRAFFIC SOURCES" title="Event traffic mix" detail="Recorded event rows grouped by traffic source" />
               <BarList rows={summary.traffic_sources} valueKey="value" total={metrics.events} formatValue={number} />
               <ChartExplanation
                 question="Which traffic source contributed the most recorded events?"

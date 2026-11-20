@@ -2,6 +2,7 @@ import argparse
 import csv
 import io
 import json
+import unicodedata
 import zipfile
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -9,6 +10,42 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+COUNTRY_CENTERS = {
+    "Australia": (-25.0, 133.0),
+    "Austria": (47.5, 14.5),
+    "Belgium": (50.5, 4.5),
+    "Brazil": (-10.0, -53.0),
+    "China": (35.0, 103.0),
+    "Colombia": (4.0, -73.0),
+    "France": (46.0, 2.0),
+    "Germany": (51.0, 10.0),
+    "Japan": (37.0, 138.0),
+    "Poland": (52.0, 20.0),
+    "South Korea": (36.0, 128.0),
+    "Spain": (40.0, -4.0),
+    "United Kingdom": (55.0, -3.0),
+    "United States": (39.0, -98.0),
+}
+COUNTRY_LABELS = {
+    "australia": "Australia",
+    "austria": "Austria",
+    "belgium": "Belgium",
+    "brasil": "Brazil",
+    "brazil": "Brazil",
+    "china": "China",
+    "colombia": "Colombia",
+    "deutschland": "Germany",
+    "espana": "Spain",
+    "espaa": "Spain",
+    "france": "France",
+    "germany": "Germany",
+    "japan": "Japan",
+    "poland": "Poland",
+    "south korea": "South Korea",
+    "spain": "Spain",
+    "united kingdom": "United Kingdom",
+    "united states": "United States",
+}
 
 
 def _read_rows(archive, filename):
@@ -34,16 +71,25 @@ def _money(value):
         return 0.0
 
 
+def _country_label(value):
+    normalized = unicodedata.normalize("NFKD", value or "")
+    key = normalized.encode("ascii", "ignore").decode("ascii").strip().lower()
+    return COUNTRY_LABELS.get(key, (value or "Unknown").strip())
+
+
 def build_snapshot(archive_path):
     with zipfile.ZipFile(archive_path) as archive:
-        user_states = {
-            row["id"]: row["state"]
-            for row in _read_rows(archive, "users.csv")
-            if row["id"] and row["state"]
-        }
+        user_locations = {}
+        for row in _read_rows(archive, "users.csv"):
+            if row["id"]:
+                user_locations[row["id"]] = {
+                    "state": row["state"],
+                    "country": _country_label(row["country"]),
+                }
         products = {
             row["id"]: {
                 "category": row["category"] or "Unknown",
+                "department": row["department"] or "Unknown",
                 "cost": _money(row["cost"]),
             }
             for row in _read_rows(archive, "products.csv")
@@ -54,6 +100,7 @@ def build_snapshot(archive_path):
         months = defaultdict(lambda: {"orders": 0, "sales": 0.0, "delivery_days": []})
         statuses = Counter()
         regions = defaultdict(lambda: {"orders": 0, "sales": 0.0})
+        countries = defaultdict(lambda: {"orders": 0, "sales": 0.0})
         customers = set()
         delivery_days = []
         returned_orders = 0
@@ -65,7 +112,9 @@ def build_snapshot(archive_path):
             if not order_id:
                 continue
             month = created.strftime("%Y-%m") if created else None
-            state = user_states.get(row["user_id"])
+            location = user_locations.get(row["user_id"], {})
+            state = location.get("state")
+            country = location.get("country")
             status = (row["status"] or "unknown").strip()
             returned = bool(row["returned_at"]) or status.lower() == "returned"
             delivered = _parse_datetime(row["delivered_at"])
@@ -75,7 +124,7 @@ def build_snapshot(archive_path):
                 if month:
                     months[month]["delivery_days"].append(days)
 
-            orders[order_id] = {"month": month, "state": state}
+            orders[order_id] = {"month": month, "state": state, "country": country}
             if created:
                 order_dates.append(created)
                 months[month]["orders"] += 1
@@ -85,8 +134,11 @@ def build_snapshot(archive_path):
             returned_orders += int(returned)
             if state:
                 regions[state]["orders"] += 1
+            if country:
+                countries[country]["orders"] += 1
 
         categories = defaultdict(lambda: {"sales": 0.0, "cost": 0.0, "items": 0, "orders": set()})
+        departments = defaultdict(lambda: {"sales": 0.0, "items": 0})
         item_count = 0
         gross_sales = 0.0
         cost_total = 0.0
@@ -96,6 +148,7 @@ def build_snapshot(archive_path):
             if order is None:
                 continue
             category = product["category"] if product else "Unknown"
+            department = product["department"] if product else "Unknown"
             sales = _money(row["sale_price"])
             cost = product["cost"] if product else 0.0
             item_count += 1
@@ -105,10 +158,14 @@ def build_snapshot(archive_path):
             categories[category]["cost"] += cost
             categories[category]["items"] += 1
             categories[category]["orders"].add(row["order_id"])
+            departments[department]["sales"] += sales
+            departments[department]["items"] += 1
             if order["month"]:
                 months[order["month"]]["sales"] += sales
             if order["state"]:
                 regions[order["state"]]["sales"] += sales
+            if order["country"]:
+                countries[order["country"]]["sales"] += sales
 
         event_types = Counter()
         traffic_sources = Counter()
@@ -159,6 +216,27 @@ def build_snapshot(archive_path):
         }
         for label, values in sorted(regions.items(), key=lambda item: item[1]["sales"], reverse=True)[:10]
     ]
+    country_rows = [
+        {
+            "label": label,
+            "sales": round(values["sales"], 2),
+            "orders": values["orders"],
+            "share": round(values["sales"] / gross_sales * 100, 2) if gross_sales else 0,
+            "map_latitude": COUNTRY_CENTERS[label][0],
+            "map_longitude": COUNTRY_CENTERS[label][1],
+        }
+        for label, values in sorted(countries.items(), key=lambda item: item[1]["sales"], reverse=True)
+        if label in COUNTRY_CENTERS
+    ]
+    department_rows = [
+        {
+            "label": label,
+            "sales": round(values["sales"], 2),
+            "share": round(values["sales"] / gross_sales * 100, 2) if gross_sales else 0,
+            "items": values["items"],
+        }
+        for label, values in sorted(departments.items(), key=lambda item: item[1]["sales"], reverse=True)
+    ]
     total_orders = sum(statuses.values())
     return {
         "source": "Google BigQuery TheLook eCommerce export",
@@ -188,6 +266,8 @@ def build_snapshot(archive_path):
         "categories": category_rows,
         "statuses": status_rows,
         "regions": region_rows,
+        "countries": country_rows,
+        "departments": department_rows,
         "event_types": [
             {"label": label, "value": count}
             for label, count in event_types.most_common(8)

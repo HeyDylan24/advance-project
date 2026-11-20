@@ -41,6 +41,11 @@ function PanelHeading({ eyebrow, title, detail, action }) {
   );
 }
 
+function scrollToSection(event) {
+  event.preventDefault();
+  document.getElementById(event.currentTarget.hash.slice(1))?.scrollIntoView({ block: "start" });
+}
+
 function SalesChart({ rows }) {
   if (!rows.length) return <p className="empty-chart">No sales data is available for this period.</p>;
 
@@ -624,13 +629,13 @@ export default function Dashboard({ onBackToPortal }) {
         </div>
         <p className="sidebar-section-label">ANALYZE</p>
         <nav className="sidebar-nav" aria-label="Dashboard sections">
-          <a className="nav-link nav-link-active" href="#overview"><span className="nav-icon">▦</span>Overview</a>
-          <a className="nav-link" href="#revenue"><span className="nav-icon">⌁</span>Revenue & forecast</a>
-          <a className="nav-link" href="#product-analysis"><span className="nav-icon">◈</span>Product performance</a>
-          <a className="nav-link" href="#customer-insights"><span className="nav-icon">◎</span>Customer insights</a>
-          <a className="nav-link" href="#regional-analysis"><span className="nav-icon">◉</span>Brazil map</a>
-          <a className="nav-link" href="#delivery-review"><span className="nav-icon">↗</span>Delivery & reviews</a>
-          <a className="nav-link" href="#demand-patterns"><span className="nav-icon">▥</span>Demand patterns</a>
+          <a className="nav-link nav-link-active" href="#overview" onClick={scrollToSection}><span className="nav-icon">▦</span>Overview</a>
+          <a className="nav-link" href="#revenue" onClick={scrollToSection}><span className="nav-icon">⌁</span>Revenue & forecast</a>
+          <a className="nav-link" href="#product-analysis" onClick={scrollToSection}><span className="nav-icon">◈</span>Product performance</a>
+          <a className="nav-link" href="#customer-insights" onClick={scrollToSection}><span className="nav-icon">◎</span>Customer insights</a>
+          <a className="nav-link" href="#regional-analysis" onClick={scrollToSection}><span className="nav-icon">◉</span>Brazil map</a>
+          <a className="nav-link" href="#delivery-review" onClick={scrollToSection}><span className="nav-icon">↗</span>Delivery & reviews</a>
+          <a className="nav-link" href="#demand-patterns" onClick={scrollToSection}><span className="nav-icon">▥</span>Demand patterns</a>
         </nav>
         <div className="sidebar-spacer" />
         <div className="dataset-status">
