@@ -12,6 +12,32 @@ import "./portal.css";
 
 const MAX_FILE_BYTES = 500 * 1024 * 1024;
 const MAX_FILES = 10;
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#ff5fd2",
+    colorBackground: "#111622",
+    colorText: "#f4efff",
+    colorTextSecondary: "#aaa4b8",
+    colorInputBackground: "#0c111a",
+    colorInputText: "#f4efff",
+    colorNeutral: "#d8cde6",
+    colorDanger: "#ff7a91",
+    borderRadius: "12px",
+    fontFamily: "Manrope, sans-serif",
+    fontFamilyButtons: "Manrope, sans-serif",
+  },
+  elements: {
+    rootBox: "synth-clerk-root",
+    card: "synth-clerk-card",
+    headerTitle: "synth-clerk-title",
+    headerSubtitle: "synth-clerk-subtitle",
+    formFieldLabel: "synth-clerk-label",
+    formFieldInput: "synth-clerk-input",
+    formButtonPrimary: "synth-clerk-button",
+    footerActionLink: "synth-clerk-link",
+    dividerLine: "synth-clerk-divider",
+  },
+};
 
 function SetupNotice({ title, children }) {
   return (
@@ -429,7 +455,7 @@ export default function App() {
     );
   }
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} appearance={clerkAppearance}>
       <Workspace />
     </ClerkProvider>
   );

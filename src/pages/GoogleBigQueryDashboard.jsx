@@ -118,6 +118,80 @@ function TrendChart({ rows, valueKey, color, formatValue, axisFormat, ariaLabel 
   );
 }
 
+function ForecastChart({ history, forecast }) {
+  if (!forecast.available || !forecast.values.length) {
+    return <p className="empty-chart">Not enough monthly history is available to forecast sales.</p>;
+  }
+
+  const observed = history.slice(-18).map((row) => ({ ...row, value: Number(row.sales), projected: false }));
+  const projected = forecast.values.map((row) => ({ ...row, projected: true }));
+  const upperValues = projected.map((row) => Number(row.upper));
+  const max = Math.max(...observed.map((row) => row.value), ...upperValues, 1);
+  const width = 760;
+  const height = 250;
+  const padding = { top: 18, right: 16, bottom: 38, left: 76 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const rows = [...observed, ...projected];
+  const points = rows.map((row, index) => ({
+    ...row,
+    x: padding.left + (index / Math.max(rows.length - 1, 1)) * plotWidth,
+    y: padding.top + plotHeight - (Number(row.value) / max) * plotHeight,
+  }));
+  const observedPoints = points.slice(0, observed.length);
+  const forecastPoints = points.slice(observed.length);
+  const anchor = observedPoints[observedPoints.length - 1];
+  const forecastLine = [anchor, ...forecastPoints].map((point) => `${point.x},${point.y}`).join(" ");
+  const upper = forecastPoints.map((point) =>
+    `${point.x},${padding.top + plotHeight - (Number(point.upper) / max) * plotHeight}`,
+  );
+  const lower = forecastPoints.slice().reverse().map((point) =>
+    `${point.x},${padding.top + plotHeight - (Number(point.lower) / max) * plotHeight}`,
+  );
+  const band = [...upper, ...lower].join(" ");
+  const observedLine = observedPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const labelIndexes = new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]);
+
+  return (
+    <div className="chart-wrap bq-forecast-chart">
+      <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly sales history and six-month model forecast">
+        <defs>
+          <linearGradient id="bq-forecast-band" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#ff5fd2" stopOpacity=".22" />
+            <stop offset="100%" stopColor="#5de4ff" stopOpacity=".08" />
+          </linearGradient>
+        </defs>
+        {[0, 0.5, 1].map((tick) => {
+          const y = padding.top + plotHeight * (1 - tick);
+          return (
+            <g key={tick}>
+              <line x1={padding.left} x2={width - padding.right} y1={y} y2={y} className="grid-line" />
+              <text x={padding.left - 10} y={y + 4} textAnchor="end" className="axis-label">{compactCurrency(max * tick)}</text>
+            </g>
+          );
+        })}
+        <polygon points={band} className="bq-forecast-band" />
+        <polyline points={observedLine} fill="none" stroke="#738095" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline points={forecastLine} className="bq-forecast-line" />
+        {points.map((point, index) => (
+          <g key={point.label}>
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r={point.projected ? 4 : 3}
+              className={point.projected ? "bq-forecast-point" : "bq-observed-point"}
+            />
+            <title>{point.label}: {currency(point.value)}{point.projected ? ` · range ${currency(point.lower)}–${currency(point.upper)}` : " · observed"}</title>
+            {labelIndexes.has(index) && (
+              <text x={point.x} y={height - 12} textAnchor="middle" className="axis-label">{point.label}</text>
+            )}
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 function BarList({ rows, valueKey, total, formatValue, detail }) {
   if (!rows.length) return <p className="empty-chart">No data is available for this chart.</p>;
   const max = Math.max(...rows.map((row) => Number(row[valueKey])), 1);
@@ -227,6 +301,13 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
   const leadingCountryShare = summary.countries
     .slice(0, 3)
     .reduce((share, row) => share + Number(row.share), 0);
+  const selectedModelScore = summary.forecast.backtest.find(
+    (score) => score.model === summary.forecast.model,
+  );
+  const comparisonModelScore = summary.forecast.backtest.find(
+    (score) => score.model !== summary.forecast.model,
+  );
+  const forecastTotal = summary.forecast.values.reduce((total, row) => total + Number(row.value), 0);
   const dateRange = `${summary.date_range.first_order} – ${summary.date_range.last_order}`;
 
   return (
@@ -245,6 +326,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
         <nav className="sidebar-nav" aria-label="BigQuery analysis sections">
           <a className="nav-link nav-link-active" href="#bq-overview" onClick={scrollToSection}><span className="nav-icon">▦</span>Overview</a>
           <a className="nav-link" href="#bq-revenue" onClick={scrollToSection}><span className="nav-icon">⌁</span>Revenue & delivery</a>
+          <a className="nav-link" href="#bq-forecast" onClick={scrollToSection}><span className="nav-icon">↗</span>Sales forecast</a>
           <a className="nav-link" href="#bq-categories" onClick={scrollToSection}><span className="nav-icon">◈</span>Categories & events</a>
           <a className="nav-link" href="#bq-world" onClick={scrollToSection}><span className="nav-icon">◎</span>Global markets</a>
           <a className="nav-link" href="#bq-operations" onClick={scrollToSection}><span className="nav-icon">↗</span>Orders & regions</a>
@@ -277,7 +359,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
             <div>
               <p className="eyebrow"><span className="heading-dot" /> GOOGLE BIGQUERY <i>/</i> COMMERCE ANALYSIS</p>
               <h1>Commerce, at a glance.</h1>
-              <p className="subheading">A privacy-preserving analysis of the TheLook eCommerce export, aggregated from order, item, product, and event tables.</p>
+              <p className="subheading">A privacy-preserving TheLook eCommerce snapshot with global market comparisons, chart insights, and a rolling-backtested six-month sales forecast.</p>
             </div>
             <div className="bq-period"><span>ORDER DATE RANGE</span><strong>{dateRange}</strong></div>
           </section>
@@ -329,9 +411,42 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
             </article>
           </section>
 
+          <section className="forecast-section bq-forecast-section" id="bq-forecast">
+            <article className="panel forecast-panel">
+              <PanelHeading
+                eyebrow="03 / PREDICTIVE MODEL"
+                title="Six-month sales outlook"
+                detail={`Forecast begins after ${summary.forecast.last_observed_month} · ${summary.forecast.training_months} monthly observations · rolling backtest selected`}
+                action={<span className="model-badge">{summary.forecast.model_label.toUpperCase()} · BACKTESTED</span>}
+              />
+              <div className="forecast-legend">
+                <span><i className="legend-observed" />Observed</span>
+                <span><i className="legend-projection" />Forecast</span>
+                <span><i className="legend-range" />Empirical error range</span>
+              </div>
+              <ForecastChart history={summary.monthly} forecast={summary.forecast} />
+              <div className="bq-model-diagnostics" aria-label="Rolling forecast backtest comparison">
+                {summary.forecast.backtest.map((score) => (
+                  <div className={`model-score ${score.model === summary.forecast.model ? "model-score-selected" : ""}`} key={score.model}>
+                    <span>{score.model === "seasonal_naive" ? "Seasonal naïve" : "Naïve baseline"}</span>
+                    <strong>{score.wape === null ? "—" : percent(score.wape)} WAPE</strong>
+                    <small>MAE {currency(score.mae)} · {score.observations} rolling tests</small>
+                  </div>
+                ))}
+                <p>Model selection uses expanding-window, one-month-ahead errors. This is a historical snapshot forecast, not a current-market projection.</p>
+              </div>
+              <ChartExplanation
+                question="Which model performed better, and what does it project?"
+                inference={selectedModelScore
+                  ? `${summary.forecast.model_label} had ${percent(selectedModelScore.wape)} rolling WAPE${comparisonModelScore ? ` versus ${percent(comparisonModelScore.wape)} for the alternative` : ""}. It projects ${currency(forecastTotal)} in total item sales over six months after ${summary.forecast.last_observed_month}. The shaded range is based on the 90th percentile of past one-step errors, not a formal confidence interval.`
+                  : "Not enough consecutive monthly sales history is available for a backtested forecast."}
+              />
+            </article>
+          </section>
+
           <section className="chart-grid bq-triple-grid" id="bq-categories">
             <article className="panel">
-              <PanelHeading eyebrow="03 / ASSORTMENT" title="Category sales" detail="Top product categories by item sales" />
+              <PanelHeading eyebrow="04 / ASSORTMENT" title="Category sales" detail="Top product categories by item sales" />
               <BarList rows={summary.categories} valueKey="sales" formatValue={currency} />
               <ChartExplanation
                 question="Which product categories drive the most sales?"
@@ -341,7 +456,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="04 / PRODUCT MIX" title="Department sales" detail="Sales split across product departments" />
+              <PanelHeading eyebrow="05 / PRODUCT MIX" title="Department sales" detail="Sales split across product departments" />
               <BarList rows={summary.departments} valueKey="sales" formatValue={currency} />
               <ChartExplanation
                 question="Which department contributes more item sales?"
@@ -351,7 +466,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="05 / SHOPPING ACTIVITY" title="Event mix" detail="Recorded event rows by event type—not unique users" />
+              <PanelHeading eyebrow="06 / SHOPPING ACTIVITY" title="Event mix" detail="Recorded event rows by event type—not unique users" />
               <BarList rows={summary.event_types} valueKey="value" total={metrics.events} formatValue={number} />
               <ChartExplanation
                 question="Which event type appears most often in the event log?"
@@ -364,7 +479,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
 
           <section className="panel bq-world-panel" id="bq-world">
             <PanelHeading
-              eyebrow="06 / GLOBAL MARKETS"
+              eyebrow="07 / GLOBAL MARKETS"
               title="Where commerce happens"
               detail={`Country-level sales across ${summary.countries.length} markets · markers use approximate country centers`}
               action={<span className="panel-unit">{summary.countries.length} COUNTRIES</span>}
@@ -386,7 +501,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
 
           <section className="chart-grid research-grid" id="bq-operations">
             <article className="panel">
-              <PanelHeading eyebrow="07 / ORDER FULFILLMENT" title="Order status mix" detail="Order counts grouped by recorded status" />
+              <PanelHeading eyebrow="08 / ORDER FULFILLMENT" title="Order status mix" detail="Order counts grouped by recorded status" />
               <BarList rows={summary.statuses} valueKey="value" total={metrics.orders} formatValue={number} />
               <ChartExplanation
                 question="What is the most common order outcome?"
@@ -396,7 +511,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="08 / CUSTOMER REGION" title="Sales by state" detail="Top states by item sales; location shown only in aggregate" />
+              <PanelHeading eyebrow="09 / CUSTOMER REGION" title="Sales by state" detail="Top states by item sales; location shown only in aggregate" />
               <BarList rows={summary.regions} valueKey="sales" formatValue={currency} />
               <ChartExplanation
                 question="Where are the largest state-level markets?"
@@ -409,7 +524,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
 
           <section className="chart-grid research-grid">
             <article className="panel">
-              <PanelHeading eyebrow="09 / DELIVERY TREND" title="Average delivery time by month" detail="Elapsed days from order creation to delivery" action={<span className="panel-unit">{Number(metrics.average_delivery_days).toFixed(1)} DAYS OVERALL</span>} />
+              <PanelHeading eyebrow="10 / DELIVERY TREND" title="Average delivery time by month" detail="Elapsed days from order creation to delivery" action={<span className="panel-unit">{Number(metrics.average_delivery_days).toFixed(1)} DAYS OVERALL</span>} />
               <TrendChart
                 rows={summary.monthly.filter((row) => row.average_delivery_days !== null)}
                 valueKey="average_delivery_days"
@@ -426,7 +541,7 @@ export default function GoogleBigQueryDashboard({ onBackToPortal }) {
               />
             </article>
             <article className="panel">
-              <PanelHeading eyebrow="10 / TRAFFIC SOURCES" title="Event traffic mix" detail="Recorded event rows grouped by traffic source" />
+              <PanelHeading eyebrow="11 / TRAFFIC SOURCES" title="Event traffic mix" detail="Recorded event rows grouped by traffic source" />
               <BarList rows={summary.traffic_sources} valueKey="value" total={metrics.events} formatValue={number} />
               <ChartExplanation
                 question="Which traffic source contributed the most recorded events?"

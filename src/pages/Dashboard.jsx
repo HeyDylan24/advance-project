@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import brazilStates from "../data/brazilStates";
 import ChartExplanation from "../ChartExplanation.jsx";
 
-const palette = ["#5b61d6", "#168b78", "#d18b36", "#ba647a", "#4385a5", "#8d6ab5", "#718b4c", "#c26c43"];
+const palette = ["#ff5fd2", "#5de4ff", "#b06cff", "#ffd166", "#6bffca", "#ff7a91", "#74a7ff", "#ff9b53"];
 
 const currency = (value) =>
   new Intl.NumberFormat("pt-BR", {
@@ -74,8 +74,8 @@ function SalesChart({ rows }) {
       <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly item sales with month-over-month change">
         <defs>
           <linearGradient id="sales-gradient" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#5b61d6" stopOpacity=".2" />
-            <stop offset="100%" stopColor="#5b61d6" stopOpacity="0" />
+            <stop offset="0%" stopColor="#ff5fd2" stopOpacity=".24" />
+            <stop offset="100%" stopColor="#5de4ff" stopOpacity="0" />
           </linearGradient>
         </defs>
         {ticks.map((tick) => {
@@ -88,7 +88,7 @@ function SalesChart({ rows }) {
           );
         })}
         <polygon points={area} fill="url(#sales-gradient)" />
-        <polyline points={line} fill="none" stroke="#5b61d6" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline points={line} fill="none" stroke="#ff5fd2" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
         {points.map((point, index) => (
           <g key={point.row.label}>
             <circle className="chart-point" cx={point.x} cy={point.y} r="4" />
@@ -219,7 +219,7 @@ function StatusSummary({ rows }) {
 
 function RatingChart({ rows }) {
   const max = Math.max(...rows.map((row) => Number(row.value)), 1);
-  const colors = ["#bd6d77", "#cd8666", "#d2a34f", "#83a58a", "#438d75"];
+  const colors = ["#ff5f87", "#ff9a59", "#ffd166", "#70e5bb", "#5de4ff"];
   return (
     <div className="rating-bars">
       {rows.map((row, index) => (

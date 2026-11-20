@@ -384,6 +384,67 @@
       "average_delivery_days": 4.04
     }
   ],
+  "forecast": {
+    "available": true,
+    "model": "naive",
+    "model_label": "Naïve",
+    "training_months": 61,
+    "horizon_months": 6,
+    "last_observed_month": "2024-01",
+    "backtest": [
+      {
+        "model": "naive",
+        "wape": 8.23,
+        "mae": 17812.91,
+        "observations": 49
+      },
+      {
+        "model": "seasonal_naive",
+        "wape": 51.01,
+        "mae": 110392.86,
+        "observations": 49
+      }
+    ],
+    "interval_method": "90th percentile of rolling one-step absolute errors",
+    "values": [
+      {
+        "label": "2024-02",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      },
+      {
+        "label": "2024-03",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      },
+      {
+        "label": "2024-04",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      },
+      {
+        "label": "2024-05",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      },
+      {
+        "label": "2024-06",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      },
+      {
+        "label": "2024-07",
+        "value": 797741.19,
+        "lower": 748625.3,
+        "upper": 846857.08
+      }
+    ]
+  },
   "categories": [
     {
       "label": "Outerwear & Coats",

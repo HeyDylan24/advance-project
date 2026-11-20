@@ -8,6 +8,8 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 
+from app.forecast import build_forecast
+
 
 ROOT = Path(__file__).resolve().parent
 COUNTRY_CENTERS = {
@@ -175,19 +177,29 @@ def build_snapshot(archive_path):
             event_types[row["event_type"] or "unknown"] += 1
             traffic_sources[row["traffic_source"] or "unknown"] += 1
 
-    month_rows = [
-        {
-            "label": month,
-            "sales": round(values["sales"], 2),
-            "orders": values["orders"],
-            "average_delivery_days": (
-                round(sum(values["delivery_days"]) / len(values["delivery_days"]), 2)
-                if values["delivery_days"]
-                else None
-            ),
-        }
-        for month, values in sorted(months.items())
-    ]
+    month_rows = []
+    month_labels = sorted(months)
+    if month_labels:
+        year, month = map(int, month_labels[0].split("-"))
+        last_label = month_labels[-1]
+        while f"{year:04d}-{month:02d}" <= last_label:
+            label = f"{year:04d}-{month:02d}"
+            values = months.get(label, {"orders": 0, "sales": 0.0, "delivery_days": []})
+            month_rows.append({
+                "label": label,
+                "sales": round(values["sales"], 2),
+                "orders": values["orders"],
+                "average_delivery_days": (
+                    round(sum(values["delivery_days"]) / len(values["delivery_days"]), 2)
+                    if values["delivery_days"]
+                    else None
+                ),
+            })
+            if month == 12:
+                year += 1
+                month = 1
+            else:
+                month += 1
     category_rows = [
         {
             "label": label,
@@ -237,6 +249,10 @@ def build_snapshot(archive_path):
         }
         for label, values in sorted(departments.items(), key=lambda item: item[1]["sales"], reverse=True)
     ]
+    forecast = build_forecast(
+        [{"label": row["label"], "value": row["sales"]} for row in month_rows],
+        horizon=6,
+    )
     total_orders = sum(statuses.values())
     return {
         "source": "Google BigQuery TheLook eCommerce export",
@@ -263,6 +279,7 @@ def build_snapshot(archive_path):
             "events": event_count,
         },
         "monthly": month_rows,
+        "forecast": forecast,
         "categories": category_rows,
         "statuses": status_rows,
         "regions": region_rows,
